@@ -16,6 +16,9 @@ production(b::Building) = b.prod
 
 energy_cost = transpose(rand(Float64, 24))
 energy_sale = 0.5.*energy_cost 
+
+coal_cost = 0.5.*transpose(rand(Float64, 24))
+
 #energy_sale = 0 .*energy_cost 
 function optimise_no_coord(b::Building)
 	delta_s = Variable(24)
@@ -40,27 +43,43 @@ function optimise_no_coord(b::Building)
 end
 
 function central_opt(bs::Vector{Building})
-	num_builds = bs.size
-
+	num_builds = bs.size[1]
 	delta_s = Variable(24, num_builds)
+	add_constraint!(delta_s, delta_s >= -2)
+	add_constraint!(delta_s, delta_s <= 2)
+
 	grid_cons = Variable(24, num_builds)
 	add_constraint!(grid_cons, grid_cons >= 0)
 	grid_sell = Variable(24, num_builds)
 	add_constraint!(grid_sell, grid_sell >= 0)
+	coal_exch = Variable(24, num_builds)
 	charge = Variable(24, num_builds)
 	add_constraint!(charge, charge >= 0)
-	add_constraint!(charge, charge[1] == 0)
+	add_constraint!(charge, charge[1,:] == 0)
+	add_constraint!(charge, charge <= 2)
+
+	costs = Variable(num_builds)
+	cost_const = [costs[b] == (energy_cost*grid_cons[:,b]-energy_sale*grid_sell[:,b]-coal_cost*coal_exch[:,b])[1] for b in 1:num_builds]
+
+	constraints = cost_const
+	for b in 1:num_builds
+		charge_const = [charge[i+1, b] ==charge[i, b]+delta_s[i,b] for i in 1:23]
+		constraints = vcat(constraints, charge_const)
+	end
+
+	coal_const = [sum(coal_exch[i,:])==0 for i in 1:24]
+	constraints = vcat(constraints, coal_const)
+	#println(charge_const.size)
 	
-	charge_const = [vcat([charge[i+1, b] ==charge[i, b]+delta_s for i in 1:23]) for b in 1:num_builds]
-	
-	constraints = vcat(charge_const ,
-			   [delta_s <= 2-charge, charge <= 2, delta_s >= -charge])
+	#constraints = vcat(charge_const, cost_const)
+	constraints = vcat(constraints ,[consumption(bs[b])+grid_sell[:,b]+delta_s[:,b]+coal_exch[:,b]==production(bs[b])+grid_cons[:,b] for b in 1:num_builds])
 	#		    , consumption(b)+grid_sell+delta_s==production(b)+grid_cons])
-	#problem = minimize(sum(grid_cons.*energy_cost-grid_sell.*energy_sale), constraints)
-	problem = minimize(sum(energy_cost*grid_cons-energy_sale*grid_sell), constraints)
+	#problem = minimize(sum(costs), cost_const)
+	problem = minimize(sum(costs), constraints)
 	solve!(problem, SCS.Optimizer; silent=true)
 	
-	return problem
+	return problem, [delta_s, grid_cons, grid_sell, charge, costs]
+
 end
 
 #rand_num = 
@@ -89,7 +108,21 @@ println("Building 1 pays ", no_opt_cost[1])
 println("-------------")
 
 res, vars = optimise_no_coord(buildings[1])
+res2, vars2 = optimise_no_coord(buildings[2])
+res3, vars3 = optimise_no_coord(buildings[3])
 println("With storage, building 1 pays ", res.optval)
+println("Decentralised, buildings pay ", res.optval+res2.optval+res3.optval)
+println("delta_s ", vars[1].value)
+println("cons ", vars[2].value)
+println("sell ", vars[3].value)
+println("charge ", vars[4].value)
+
+
+println("-------------")
+
+res, vars = central_opt(buildings)
+println("Cental MPC, buildings pay ", res.optval)
+println("Building 1 pays ", vars[5].value[1])
 println("delta_s ", vars[1].value)
 println("cons ", vars[2].value)
 println("sell ", vars[3].value)
