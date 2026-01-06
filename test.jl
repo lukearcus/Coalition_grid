@@ -1,7 +1,8 @@
 using JuMP, SCS
 #using Convex, SCS
-using Debugger
+#using Debugger
 using LinearAlgebra
+using Combinatorics
 
 abstract type Player end
 
@@ -10,7 +11,10 @@ struct Building <: Player
 	cons::Vector{Float64}
 	prod::Vector{Float64}
 	max_storage::Float16
+	id::Int
 end
+
+Base.show(io::IO, b::Building) = print(io, b.id)
 
 location(b::Building) = b.loc
 consumption(b::Building) = b.cons
@@ -23,6 +27,7 @@ coal_cost = (energy_cost+energy_sale)/2
 #energy_sale = 0 .*energy_cost 
 function optimise_no_coord(b::Building)
 	model = Model(SCS.Optimizer)
+	set_silent(model)
 	@variable(model, delta_s[1:24])
 
 	
@@ -46,6 +51,7 @@ end
 function central_opt(bs::Vector{Building})
 	num_builds = bs.size[1]
 	model = Model(SCS.Optimizer)
+	set_silent(model)
 	@variable(model, delta_s[1:24, 1:num_builds])
 
 	
@@ -79,13 +85,13 @@ end
 
 #rand_num = 
 #println(rand_num)
-num_builds = 3
-buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1] ) for i = 1:num_builds]
+num_builds = 5
+buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],i) for i = 1:num_builds]
 
 #build_1 = Building((0.0,0.0),[1,2,3],[3,2,1],2)
 
-println(energy_cost*consumption(buildings[1]))
-println(energy_sale*production(buildings[1]))
+#println(energy_cost*consumption(buildings[1]))
+#println(energy_sale*production(buildings[1]))
 
 #no_opt_cost = [energy_cost*consumption(b)-energy_sale*production(b) for b in buildings]
 req_energy = [consumption(b)-production(b) for b in buildings]
@@ -93,32 +99,56 @@ energy_cons = [[elem >= 0 ? elem : 0 for elem in req_en] for req_en in req_energ
 energy_sold = [[elem <= 0 ? -elem : 0 for elem in req_en] for req_en in req_energy]
 no_opt_cost = [sum(energy_cost*en_cons-(energy_sale*en_sold)[1]) for (en_cons, en_sold) in zip(energy_cons, energy_sold)]
 
-println("Costs: ", no_opt_cost)
+println("No storage, buildings pay: ", sum(no_opt_cost))
 
-println("Building 1 is in location ", buildings[1].loc)
-println("Building 1 requires energy ", consumption(buildings[1]))
-println("Building 1 produces energy ", production(buildings[1]))
-println("Building 1 pays ", no_opt_cost[1])
+#println("Building 1 is in location ", buildings[1].loc)
+#println("Building 1 requires energy ", consumption(buildings[1]))
+#println("Building 1 produces energy ", production(buildings[1]))
+#println("Building 1 pays ", no_opt_cost[1])
 
 println("-------------")
 
-res, vars = optimise_no_coord(buildings[1])
-res2, vars2 = optimise_no_coord(buildings[2])
-res3, vars3 = optimise_no_coord(buildings[3])
-println("With storage, building 1 pays ", objective_value(res))
-println("Decentralised, buildings pay ", objective_value(res)+objective_value(res2)+objective_value(res3))
-println("delta_s ", value(vars[1]))
-println("cons ", value(vars[2]))
-println("sell ", value(vars[3]))
-println("charge ", value(vars[4]))
+outs = [optimise_no_coord(building) for building in buildings]
+res = [out[1] for out in outs]
+vars = [out[2] for out in outs]
+#vars = outs[:,2]
+#res2, vars2 = optimise_no_coord(buildings[2])
+#res3, vars3 = optimise_no_coord(buildings[3])
+#println("With storage, building 1 pays ", objective_value(res))
+println("Decentralised, buildings pay ", sum([objective_value(r) for r in res]))
+#println("delta_s ", value(vars[1]))
+#println("cons ", value(vars[2]))
+#println("sell ", value(vars[3]))
+#println("charge ", value(vars[4]))
+ind_coal_costs = [objective_value(r) for r in res]
 
 
 println("-------------")
 
 res, vars = central_opt(buildings)
-println("Cental MPC, buildings pay ", objective_value(res))
+println("Central MPC, buildings pay ", objective_value(res))
 println("Building 1 pays ", value(vars[5])[1])
-println("delta_s ", value(vars[1]))
-println("cons ", value(vars[2]))
-println("sell ", value(vars[3]))
-println("charge ", value(vars[4]))
+#println("delta_s ", value(vars[1]))
+#println("cons ", value(vars[2]))
+#println("sell ", value(vars[3]))
+#println("charge ", value(vars[4]))
+
+max_coal_size = 3
+possible_coals = collect(partitions(buildings))
+min_ind = 1
+coal_vals = Dict()
+for coal in possible_coals
+	valid_coal = true
+	for elem in coal
+		if elem.size[1] > max_coal_size
+			valid_coal = false
+			break
+		end
+	end
+	if valid_coal
+		coal_vals[coal] = sum([objective_value(central_opt(ind_coal)[1]) for ind_coal in coal])
+	end
+end
+
+sorted_coal_vals = sort!(collect(coal_vals), by=last)
+println(sorted_coal_vals[1])
