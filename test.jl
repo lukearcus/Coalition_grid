@@ -14,6 +14,8 @@ opt = MPC_optimiser(energy_cost, energy_sale)
 num_builds = 5
 buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],i) for i = 1:num_builds]
 
+privacy_focussed_coals(buildings,3)
+
 println("-------------")
 
 outs = [optimise(opt, [building]) for building in buildings]

@@ -24,9 +24,32 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
     res = [out[1] for out in outs]
     vars = [out[2] for out in outs]
 
-    cons_vec = [value(var[2]-var[3]) for var in vars]
+    cons_vec = [vec(value(var[2]-var[3])) for var in vars]
 
-    
+    agents = Vector(1:length(buildings))
+    done = false
+    while !done
+        poss_coals = collect(combinations(agents,2))
+        poss_coal_vals = Dict()
+        for c in poss_coals
+            if any(cons_vec[c[1]].*cons_vec[c[2]] < zeros(length(cons_vec[c[1]])))
+                poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
+            else
+                poss_coal_vals[c] = 9999
+            end
+        end
+        sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
+        if sorted_coal_vals[1] == 9999
+            break
+        end
+        new_agents = Vector()
+        for elem in sorted_coal_vals
+            if !(elem[1][1] in new_agents) && !(elem[1][2] in new_agents)
+                push!(new_agents, elem[1])
+            end
+        end
+        println(sorted_coal_vals)
+    end
     #println(cons_vec)
     #println("cons ", value(vars[2][2]))
     #println("sell ", vars[1][3])
