@@ -11,9 +11,11 @@ include("load_EMS_data.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 70
+num_builds = 2
+max_coal_size = 5
+
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
-buildings, energy_cost, energy_sale = load_from_CSV(num_builds)
+buildings, energy_cost, energy_sale = load_from_CSV(num_builds,5)
 opt = MPC_optimiser(energy_cost', energy_sale')
 
 
@@ -29,13 +31,13 @@ vars = [out[2] for out in outs]
 #res2, vars2 = optimise_no_coord(buildings[2])
 #res3, vars3 = optimise_no_coord(buildings[3])
 #println("With storage, building 1 pays ", objective_value(res))
-println("Decentralised, buildings pay ", sum([objective_value(r) for r in res]))
+println("Decentralised, buildings pay ", sum([r for r in res]))
 println("Computation took ", t2-t1,"s")
 #println("delta_s ", value(vars[1]))
 #println("cons ", value(vars[2]))
 #println("sell ", value(vars[3]))
 #println("charge ", value(vars[2][4]))
-ind_coal_costs = [objective_value(r) for r in res]
+#ind_coal_costs = [objective_value(r) for r in res]
 
 
 println("-------------")
@@ -44,14 +46,13 @@ t3 = time()
 res, vars = optimise(opt, buildings)
 t4 = time()
 
-println("Central MPC, buildings pay ", objective_value(res))
+println("Central MPC, buildings pay ", res)
 println("Computation took ", t4-t3,"s")
 
 #println("Building 1 pays ", value(vars[5])[1])
 
 println("-------------")
 
-max_coal_size = 4
 
 t7 = time()
 private_coal, val = privacy_focussed_coals(buildings,max_coal_size)

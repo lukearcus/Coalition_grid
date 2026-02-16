@@ -28,7 +28,7 @@ function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
         #    println(optimise(opt, buildings[agent])[1])
         #end
         outs = [optimise(opt, buildings[agent]) for agent in agents]
-        res = [out[1] for out in outs]
+        res = Dict([agent => out[1] for (out, agent) in zip(outs, agents)])
         vars = [out[2] for out in outs]
 
         poss_coals = collect(combinations(agents,2))
@@ -36,7 +36,7 @@ function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
         for c in poss_coals
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
-            poss_coal_vals[c] = sum(objective_value(optimise(opt, buildings[poss_coal_vec])[1]))
+            poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(objective_value(optimise(opt, buildings[poss_coal_vec])[1])) #added res c[1] c[2] - joint to better discriminate
         end
         sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         new_agents = Vector()
@@ -73,6 +73,7 @@ end
 function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
     agents = Vector(1:length(buildings))
     done = false
+    energy_diff = opt.energy_cost-opt.energy_sale
     while !done
         done = true
         #for agent in agents
@@ -89,7 +90,7 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
         for c in poss_coals
             compatible_slots = cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]]))
             if any(compatible_slots)
-                poss_coal_vals[c] = sum(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]])))
+                poss_coal_vals[c] = energy_diff*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
                 #poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
             end
         end
