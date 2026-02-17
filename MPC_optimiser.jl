@@ -4,6 +4,16 @@ struct MPC_optimiser
     energy_sale::Array{Float64}
 end
 
+function energy_cost_k(opt::MPC_optimiser, k::Int)
+	last_elem = length(opt.energy_cost)
+	return vcat(opt.energy_cost[k:last_elem], opt.energy_cost[1:k-1])
+end
+
+function energy_sale_k(opt::MPC_optimiser, k::Int)
+	last_elem = length(opt.energy_sale)
+	return vcat(opt.energy_sale[k:last_elem], opt.energy_sale[1:k-1])
+end
+
 
 function optimise(opt::MPC_optimiser,bs::Vector{Building})
 	num_builds = bs.size[1]
@@ -99,7 +109,7 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
 	
 	@constraint(model, coal_c, coal_exch*ones(num_builds).==0)
 	
-	@constraint(model, cost_c, costs'.==opt.energy_cost*grid_cons-opt.energy_sale*grid_sell) # need to fix this
+	@constraint(model, cost_c, costs'.==energy_cost_k(opt,k)'*grid_cons-energy_sale_k(opt,k)'*grid_sell) # need to fix this
 
 	@objective(model, Min, ones(num_builds)'*costs)
 	
@@ -107,6 +117,10 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
 	#println(sum(value(neg_delta_s.*pos_delta_s)))
 
 	return model, [delta_s, grid_cons, grid_sell, charge, costs, coal_exch]
+end
+
+function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int)
+	single_optimise(opt,[b],k)
 end
 
 function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
@@ -128,9 +142,16 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
 			end		
 		end
 	end
+
+
+
+
 	if num_steps < 96
 		buy_cost = opt.energy_cost[1:num_steps]
 		sell_price = opt.energy_sale[1:num_steps]
+	else
+		buy_cost = hcat(repeat(opt.energy_cost,num_steps÷96), opt.energy_cost[1:(num_steps%96)])'
+		sell_price = hcat(repeat(opt.energy_sale,num_steps÷96), opt.energy_sale[1:(num_steps%96)])'
 	end
 	cost = sum(buy_cost'*buy-sell_price'*sell)
 	return cost, [buy, sell]
