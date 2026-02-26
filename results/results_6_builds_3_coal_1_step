@@ -1,0 +1,15 @@
+Decentralised, buildings pay 68.63519970851739
+Computation took 1.2339999675750732s
+-------------
+Central MPC, buildings pay 64.50064187364354
+Computation took 0.1809999942779541s
+-------------
+In private coalitions agents pay 66.9094419613368
+Computation took 1.0269999504089355s
+-------------
+In full-info bottom-up coalition agents pay 67.81686328117155
+Computation took 2.0450000762939453s
+-------------
+Coalitional optimal
+In optimal coalition agents pay 65.82259104487336
+Computation took 30.819000005722046s

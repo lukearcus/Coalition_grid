@@ -98,7 +98,13 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
 	discharge_eff_vec = hcat([1/discharge_eff(b) for b in bs])
 
 	init_charge_mat = vcat([b.SoC[k] for b in bs]',zeros(num_steps-1,num_builds))
-
+	# println([b.SoC[k] for b in bs])
+	# if isnan(bs[1].SoC[k][1])
+	# 	b=bs[1]
+	# 	println(b)
+	# 	println(b.SoC)
+	# 	println(k)
+	# end
 	@constraint(model, charge_c, charge .== charge_mat*charge+charge_mat*(pos_delta_s.*charge_eff_vec')+charge_mat*(neg_delta_s.*discharge_eff_vec')+init_charge_mat)
 
 	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
@@ -129,12 +135,12 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	for k = 1:num_steps
-		_, res = single_optimise(opt, bs, k)
+		model, res = single_optimise(opt, bs, k)
 		for (i, b) in enumerate(bs)
 			if k < num_steps
-				b.SoC[k+1] = value(res[4][2,i]) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
+				b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
 			end
-			remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i])
+			remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
 			if remaining > 0
 				sell[k,i] = remaining
 			else
@@ -142,11 +148,7 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
 			end		
 		end
 	end
-
-
-
-
-	if num_steps < 96
+	if num_steps <= 96
 		buy_cost = opt.energy_cost[1:num_steps]
 		sell_price = opt.energy_sale[1:num_steps]
 	else
@@ -156,4 +158,78 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
 	cost = sum(buy_cost'*buy-sell_price'*sell)
 	return cost, [buy, sell]
 	# return single_optimise(opt, bs, 1)
+end
+
+function single_coal_opt(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int, k::Int)
+	coal = coal_former(bs,max_coal_size,k)
+    # println(coal)
+    # println(typeof(coal))
+    if coal isa Vector{Vector{MPC_Building}}
+        outs = [single_optimise(opt, agent, k) for agent in coal]
+    else
+        outs = [single_optimise(opt, buildings[agent], k) for agent in coal]
+    end
+    res = [sum(objective_value(out[1])) for out in outs]
+    return coal, sum(res)
+end
+
+# function enumerate(itt::MPC_Building)
+# 	return 1, itt
+# end
+
+function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int)
+    num_steps = length(bs[1].act_cons)
+	num_builds = length(bs)
+	buy = zeros(num_steps,num_builds)
+	sell = zeros(num_steps,num_builds)
+	for k = 1:num_steps
+        coal = coal_former(bs,max_coal_size,k)
+        if coal isa Vector{Vector{MPC_Building}}
+            outs = [single_optimise(opt, agent, k) for agent in coal]
+        else
+            outs = [single_optimise(opt, buildings[agent], k) for agent in coal]
+        end
+        res = [sum(objective_value(out[1])) for out in outs]
+		# _, res = single_optimise(opt, bs, k)
+		for (out,agent) in zip(outs, coal)
+            if !(coal isa Vector{Vector{MPC_Building}})
+                agent = buildings[agent]
+            end
+            res = out[2]
+			if !(agent isa MPC_Building)
+				for (i,b) in enumerate(agent)
+					if k < num_steps
+						b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
+					end
+					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
+					if remaining > 0
+						sell[k,b.id] = remaining
+					else
+						buy[k,b.id]=-remaining
+					end
+				end
+			else
+				b = agent
+				if k < num_steps
+					b.SoC[k+1] = value(res[4][2,1]) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
+				end
+				remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,1]+res[1][1,1])
+				if remaining > 0
+					sell[k,b.id] = remaining
+				else
+					buy[k,b.id]=-remaining
+				end
+			end
+		end
+	end
+
+	if num_steps <= 96
+		buy_cost = opt.energy_cost[1:num_steps]
+		sell_price = opt.energy_sale[1:num_steps]
+	else
+		buy_cost = hcat(repeat(opt.energy_cost,num_steps÷96), opt.energy_cost[1:(num_steps%96)])'
+		sell_price = hcat(repeat(opt.energy_sale,num_steps÷96), opt.energy_sale[1:(num_steps%96)])'
+	end
+	cost = sum(buy_cost'*buy-sell_price'*sell)
+	return cost, [buy, sell]
 end
