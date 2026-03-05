@@ -4,14 +4,14 @@ struct MPC_optimiser
     energy_sale::Array{Float64}
 end
 
-function energy_cost_k(opt::MPC_optimiser, k::Int)
+function energy_cost_k(opt::MPC_optimiser, k::Int, num_steps::Int=96)
 	last_elem = length(opt.energy_cost)
-	return vcat(opt.energy_cost[k:last_elem], opt.energy_cost[1:k-1])
+	return vcat(opt.energy_cost[k:last_elem], opt.energy_cost[1:k-1])[1:num_steps]
 end
 
-function energy_sale_k(opt::MPC_optimiser, k::Int)
+function energy_sale_k(opt::MPC_optimiser, k::Int, num_steps::Int=96)
 	last_elem = length(opt.energy_sale)
-	return vcat(opt.energy_sale[k:last_elem], opt.energy_sale[1:k-1])
+	return vcat(opt.energy_sale[k:last_elem], opt.energy_sale[1:k-1])[1:num_steps]
 end
 
 
@@ -68,10 +68,16 @@ function optimise(opt::MPC_optimiser,b::Building)
 	optimise(opt,[b])
 end
 
-function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
+function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,receding_horizon::Bool=false)
 	num_builds = bs.size[1]
 	model = Model(SCS.Optimizer)
-	num_steps = length(pred_consumption(bs[1],k))
+	if !receding_horizon
+		num_steps = length(bs[1].act_cons)-k+1
+	else
+		num_steps = length(pred_consumption(bs[1],k))
+	end
+	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
+	num_steps = max(num_steps, 1)
 	set_silent(model)
 	
 	max_flow_val = repeat(hcat([max_flow(b) for b in bs])', num_steps, 1)
@@ -109,13 +115,13 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
 
 	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
 	
-	consumps = reduce(hcat, [pred_consumption(b,k) for b in bs])
-	prods = reduce(hcat,[pred_production(b,k) for b in bs])
+	consumps = reduce(hcat, [pred_consumption(b,k,num_steps) for b in bs])
+	prods = reduce(hcat,[pred_production(b,k,num_steps) for b in bs])
 	@constraint(model, power_c, consumps+grid_sell+delta_s+coal_exch.==prods+grid_cons)
 	
 	@constraint(model, coal_c, coal_exch*ones(num_builds).==0)
 	
-	@constraint(model, cost_c, costs'.==energy_cost_k(opt,k)'*grid_cons-energy_sale_k(opt,k)'*grid_sell) # need to fix this
+	@constraint(model, cost_c, costs'.==energy_cost_k(opt,k,num_steps)'*grid_cons-energy_sale_k(opt,k,num_steps)'*grid_sell) # need to fix this
 
 	@objective(model, Min, ones(num_builds)'*costs)
 	
@@ -125,8 +131,119 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int)
 	return model, [delta_s, grid_cons, grid_sell, charge, costs, coal_exch]
 end
 
-function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int)
-	single_optimise(opt,[b],k)
+function ADMM_build_opt(b::MPC_Building,coal_trades::Vector{Float64},lambda::Vector{Float64},k::Int,c::Float64)
+	model = Model(SCS.Optimizer)
+	num_steps = length(lambda)
+	set_silent(model)
+	
+	max_flow_val = ones(num_steps).*max_flow(b)
+	@variable(model, 0<=pos_delta_s[t=1:num_steps]<=max_flow_val[t])
+	@variable(model, -max_flow_val[t]<=neg_delta_s[t=1:num_steps]<=0)
+	@variable(model, delta_s[1:num_steps])
+	@constraint(model, charge_sum, delta_s == pos_delta_s+neg_delta_s)
+	
+	@variable(model, grid_cons[1:num_steps] >= 0)
+	@variable(model, grid_sell[1:num_steps] >= 0) # replace these with 1 variable
+
+	@variable(model, coal_exch[1:num_steps])
+	capacities = ones(num_steps).*max_store(b)
+	#println(capacities)
+	#println(capacities.size)
+	@variable(model, 0 <= charge[t=1:num_steps] <= capacities[t])
+	@variable(model, cost)
+
+	charge_mat = hcat(vcat(zeros(num_steps-1)',I(num_steps-1)),zeros(num_steps))
+
+	#println(charge_eff_vec)
+
+	charge_eff_vec = charge_eff(b)'
+	discharge_eff_vec = 1/discharge_eff(b)'
+
+	init_charge_mat = vcat(b.SoC[k]',zeros(num_steps-1,1))
+	# println([b.SoC[k] for b in bs])
+	# if isnan(bs[1].SoC[k][1])
+	# 	b=bs[1]
+	# 	println(b)
+	# 	println(b.SoC)
+	# 	println(k)
+	# end
+	@constraint(model, charge_c, charge .== charge_mat*charge+charge_mat*(pos_delta_s.*charge_eff_vec')+charge_mat*(neg_delta_s.*discharge_eff_vec')+init_charge_mat)
+
+	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
+	
+	consumps =  pred_consumption(b,k,num_steps)
+	prods =pred_production(b,k,num_steps)
+	@constraint(model, power_c, consumps+grid_sell+delta_s+coal_exch.==prods+grid_cons)
+	
+	# @constraint(model, coal_c, coal_exch*ones(num_builds).==0)
+	
+	@constraint(model, cost_c, cost==energy_cost_k(opt,k,num_steps)'*grid_cons-energy_sale_k(opt,k,num_steps)'*grid_sell) # need to fix this
+
+	@objective(model, Min, cost+lambda'*coal_exch+(c/2)*(coal_exch-coal_trades)'*(coal_exch-coal_trades))
+	
+	optimize!(model)
+	#println(sum(value(neg_delta_s.*pos_delta_s)))
+	return model, [delta_s, grid_cons, grid_sell, charge, cost, coal_exch]
+end
+
+function ADMM_coal_update(lambda::Vector{Vector{Float64}},proposed_coals::Vector{Vector{Float64}},c::Float64)
+	model = Model(SCS.Optimizer)
+	num_builds = length(lambda)
+	num_steps = length(lambda[1])
+	set_silent(model)
+	@variable(model, coal_exch[1:num_steps,1:num_builds])
+	@constraint(model, coal_c, coal_exch*ones(num_builds).==0)
+
+	proposed_coals = reduce(hcat, proposed_coals)
+	lambda = reduce(hcat, lambda)
+	@objective(model, Min,-sum(lambda.*coal_exch)+(c/2)*sum((proposed_coals-coal_exch).*(proposed_coals-coal_exch)))
+
+	optimize!(model)
+
+	return model, coal_exch
+end
+
+function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,receding_horizon::Bool=false)
+	num_builds = bs.size[1]
+	if num_builds == 1
+		return single_optimise(opt,bs,k,receding_horizon)[2]
+	end
+	if !receding_horizon
+		num_steps = length(bs[1].act_cons)-k+1
+	else
+		num_steps = length(pred_consumption(bs[1],k))
+	end
+	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
+	num_steps = max(num_steps, 1)
+	c=1.0
+	new_coal = zeros(num_steps,num_builds)
+	proposed_coal =[ones(num_steps) for i in 1:num_builds]
+	lambdas = [zeros(num_steps) for i in 1:num_builds]
+	states = false
+	i=1
+	while norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5
+		c *= 1.1
+		res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
+		states = [r[2] for r in res]
+		proposed_coal = [value(state[6]) for state in states]
+
+		model, new_coal = ADMM_coal_update(lambdas,proposed_coal,c)
+		new_coal = value(new_coal)
+
+		lambdas = [lambda + c*(prop_coal-new_coal[:,ind]) for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
+		# println(proposed_coal)
+		# z update
+		#lambda update
+	end
+	states = [reduce(hcat,[state[i] for state in states]) for i in 1:length(states[1])]
+	return states
+end
+
+function single_optimise_ADMM(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_horizon::Bool=false)
+	single_optimise_ADMM(opt,[b],k,receding_horizon)
+end
+function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_horizon::Bool=false)
+	single_optimise(opt,[b],k,receding_horizon)
 end
 
 function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
@@ -135,7 +252,9 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	for k = 1:num_steps
-		model, res = single_optimise(opt, bs, k)
+
+		res = single_optimise_ADMM(opt, bs, k)
+		println(k)
 		for (i, b) in enumerate(bs)
 			if k < num_steps
 				b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
@@ -165,9 +284,9 @@ function single_coal_opt(coal_former::Function,bs::Vector{MPC_Building}, max_coa
     # println(coal)
     # println(typeof(coal))
     if coal isa Vector{Vector{MPC_Building}}
-        outs = [single_optimise(opt, agent, k) for agent in coal]
+        outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
     else
-        outs = [single_optimise(opt, buildings[agent], k) for agent in coal]
+        outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
     end
     res = [sum(objective_value(out[1])) for out in outs]
     return coal, sum(res)
@@ -185,9 +304,9 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 	for k = 1:num_steps
         coal = coal_former(bs,max_coal_size,k)
         if coal isa Vector{Vector{MPC_Building}}
-            outs = [single_optimise(opt, agent, k) for agent in coal]
+            outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
         else
-            outs = [single_optimise(opt, buildings[agent], k) for agent in coal]
+            outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
         end
         res = [sum(objective_value(out[1])) for out in outs]
 		# _, res = single_optimise(opt, bs, k)

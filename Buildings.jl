@@ -38,8 +38,8 @@ end
 Base.show(io::IO, b::MPC_Building) = print(io, b.id)
 
 location(b::MPC_Building) = b.loc
-pred_consumption(b::MPC_Building,k::Int) = b.pred_cons[k,:]
-pred_production(b::MPC_Building,k::Int) = b.pred_prod[k,:]
+pred_consumption(b::MPC_Building,k::Int,num_steps::Int=96) = b.pred_cons[k,1:num_steps]
+pred_production(b::MPC_Building,k::Int,num_steps::Int=96) = b.pred_prod[k,1:num_steps]
 max_store(b::MPC_Building) = b.max_storage
 max_flow(b::MPC_Building) = b.storage_max_flow
 charge_eff(b::MPC_Building) = b.charge_eff

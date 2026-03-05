@@ -214,9 +214,10 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
         for c in poss_coals
-            compatible_slots = cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]]))
+            num_steps = length(buildings[1].act_cons)-k+1
+            compatible_slots = (cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]])))[1:num_steps]
             if any(compatible_slots)
-                poss_coal_vals[c] = energy_diff*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
+                poss_coal_vals[c] = energy_diff[1:num_steps]'*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
                 #poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
             end
         end
