@@ -48,10 +48,17 @@ println("Computation took ", t2-t1,"s")
 println("-------------")
 
 t3 = time()
-res, vars = optimise(opt, buildings)
+res, vars = optimise(opt, buildings, false)
 t4 = time()
 
 println("Central MPC, buildings pay ", res)
+println("Computation took ", t4-t3,"s")
+
+t3 = time()
+res, vars = optimise(opt, buildings)
+t4 = time()
+
+println("Central MPC, ADMM, buildings pay ", res)
 println("Computation took ", t4-t3,"s")
 
 #println("Building 1 pays ", value(vars[5])[1])

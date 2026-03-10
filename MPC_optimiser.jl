@@ -160,13 +160,7 @@ function ADMM_build_opt(b::MPC_Building,coal_trades::Vector{Float64},lambda::Vec
 	discharge_eff_vec = 1/discharge_eff(b)'
 
 	init_charge_mat = vcat(b.SoC[k]',zeros(num_steps-1,1))
-	# println([b.SoC[k] for b in bs])
-	# if isnan(bs[1].SoC[k][1])
-	# 	b=bs[1]
-	# 	println(b)
-	# 	println(b.SoC)
-	# 	println(k)
-	# end
+
 	@constraint(model, charge_c, charge .== charge_mat*charge+charge_mat*(pos_delta_s.*charge_eff_vec')+charge_mat*(neg_delta_s.*discharge_eff_vec')+init_charge_mat)
 
 	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
@@ -215,14 +209,14 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	end
 	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
 	num_steps = max(num_steps, 1)
-	c=1.0
+	c=0.1
 	new_coal = zeros(num_steps,num_builds)
 	proposed_coal =[ones(num_steps) for i in 1:num_builds]
 	lambdas = [zeros(num_steps) for i in 1:num_builds]
 	states = false
 	i=1
 	while norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5
-		c *= 1.1
+		# c *= 1.1
 		res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
 		states = [r[2] for r in res]
 		proposed_coal = [value(state[6]) for state in states]
@@ -246,15 +240,22 @@ function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_hori
 	single_optimise(opt,[b],k,receding_horizon)
 end
 
-function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building})
+function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true)
 	num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	for k = 1:num_steps
+		# res = single_optimise_ADMM(opt, bs, k,true)
+		# println(sum(value(res[5])))
+		# model, res = single_optimise(opt, bs, k,true)
+		# println(sum(value(res[5])))
 
-		res = single_optimise_ADMM(opt, bs, k)
-		println(k)
+		if ADMM
+			res = single_optimise_ADMM(opt, bs, k)
+		else
+			model, res = single_optimise(opt, bs, k)
+		end
 		for (i, b) in enumerate(bs)
 			if k < num_steps
 				b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
@@ -308,13 +309,13 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
         else
             outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
         end
-        res = [sum(objective_value(out[1])) for out in outs]
+        #res = [sum(value(out[5])) for out in outs]
 		# _, res = single_optimise(opt, bs, k)
 		for (out,agent) in zip(outs, coal)
             if !(coal isa Vector{Vector{MPC_Building}})
                 agent = buildings[agent]
             end
-            res = out[2]
+            res = out
 			if !(agent isa MPC_Building)
 				for (i,b) in enumerate(agent)
 					if k < num_steps
