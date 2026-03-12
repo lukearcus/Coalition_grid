@@ -303,12 +303,12 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	for k = 1:num_steps
-        coal = coal_former(bs,max_coal_size,k)
-        if coal isa Vector{Vector{MPC_Building}}
-            outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
-        else
-            outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
-        end
+        coal, outs = coal_former(bs,max_coal_size,k)
+        # if coal isa Vector{Vector{MPC_Building}}
+        #     outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
+        # else
+        #     outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
+        # end
         #res = [sum(value(out[5])) for out in outs]
 		# _, res = single_optimise(opt, bs, k)
 		for (out,agent) in zip(outs, coal)

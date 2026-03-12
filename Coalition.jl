@@ -138,11 +138,12 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
 		    end
 	    end
 	    if valid_coal
-		    coal_vals[coal] = sum([objective_value(single_optimise(opt,ind_coal,k)[1]) for ind_coal in coal])
+		    coal_vals[coal] = sum([objective_value(single_optimise_ADMM(opt,ind_coal,k)[1]) for ind_coal in coal])
 	    end
     end
     sorted_coal_vals = sort!(collect(coal_vals), by=last)
-    return sorted_coal_vals[1][1]#, sorted_coal_vals[1][2]
+    outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in sorted_coal_vals[1][1]]
+    return sorted_coal_vals[1][1], outs#, sorted_coal_vals[1][2]
 end
 
 function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int)
@@ -153,7 +154,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
         #for agent in agents
         #    println(optimise(opt, buildings[agent])[1])
         #end
-        outs = [single_optimise(opt, buildings[agent], k) for agent in agents]
+        outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in agents]
         res = Dict([agent => out[1] for (out, agent) in zip(outs, agents)])
         vars = [out[2] for out in outs]
 
@@ -193,7 +194,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     #println("sell ", vars[1][3])
     # outs = [single_optimise(opt, buildings[agent], k) for agent in agents]
     # res = [sum(objective_value(out[1])) for out in outs]
-    return agents
+    return agents, outs
 end
 
 function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int)
@@ -205,7 +206,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         #for agent in agents
         #    println(optimise(opt, buildings[agent])[1])
         #end
-        outs = [single_optimise(opt, buildings[agent], k) for agent in agents]
+        outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in agents]
         res = [out[1] for out in outs]
         vars = [out[2] for out in outs]
 
@@ -250,5 +251,5 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
     #println("sell ", vars[1][3])
     # outs = [optimise(opt, buildings[agent]) for agent in agents]
     # res = [sum(objective_value(out[1])) for out in outs]
-    return agents
+    return agents, outs
 end
