@@ -162,8 +162,8 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
         #end
         outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in agents]
         num_iters += sum([out[2] for out in outs])
-        res = Dict([agent => out[1] for (out, agent) in zip(outs, agents)])
-        vars = [out[2] for out in outs]
+        res = Dict([agent => sum(out[1][5]) for (out, agent) in zip(outs, agents)])
+        vars = [out[1] for out in outs]
 
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
@@ -174,6 +174,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
             num_iters += coal_res[2]
             obj_val = sum(coal_res[1][5])
             poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(obj_val) #added res c[1] c[2] - joint to better discriminate
+            # poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(obj_val) #added res c[1] c[2] - joint to better discriminate
         end
         sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         new_agents = Vector()
