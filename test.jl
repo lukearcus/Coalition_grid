@@ -32,12 +32,14 @@ t2 = time()
 
 res = [out[1] for out in outs]
 vars = [out[2] for out in outs]
+num_iters = sum([out[3] for out in outs])
 #vars = outs[:,2]
 #res2, vars2 = optimise_no_coord(buildings[2])
 #res3, vars3 = optimise_no_coord(buildings[3])
 #println("With storage, building 1 pays ", objective_value(res))
 println("Decentralised, buildings pay ", sum([r for r in res]))
 println("Computation took ", t2-t1,"s")
+println("Required average of ", num_iters, " iterations")
 #println("delta_s ", value(vars[1]))
 #println("cons ", value(vars[2]))
 #println("sell ", value(vars[3]))
@@ -48,18 +50,22 @@ println("Computation took ", t2-t1,"s")
 println("-------------")
 
 t3 = time()
-res, vars = optimise(opt, buildings, false)
+res, vars, num_iters = optimise(opt, buildings, false)
 t4 = time()
 
 println("Central MPC, buildings pay ", res)
 println("Computation took ", t4-t3,"s")
+println("Required average of ", num_iters, " iterations")
+
 
 t3 = time()
-res, vars = optimise(opt, buildings)
+res, vars, num_iters = optimise(opt, buildings)
 t4 = time()
 
 println("Central MPC, ADMM, buildings pay ", res)
 println("Computation took ", t4-t3,"s")
+println("Required average of ", num_iters, " iterations")
+
 
 #println("Building 1 pays ", value(vars[5])[1])
 
@@ -69,26 +75,30 @@ println("-------------")
 t7 = time()
 # private_coal = privacy_focussed_coals(buildings,max_coal_size,1)
 # private_coal, res = single_coal_opt(privacy_focussed_coals,buildings,max_coal_size,1)
-res, _ = coal_MPC(privacy_focussed_coals,buildings,max_coal_size)
+res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size)
 
 t8 = time()
 
 # println("In private coalition ",private_coal, " agents pay ", res)
 println("In private coalitions agents pay ", res)
 println("Computation took ", t8-t7,"s")
+println("Required average of ", num_iters, " iterations")
+
 
 println("-------------")
 
 t9 = time()
 # private_coal = bottom_up_full_info(buildings,max_coal_size,1)
 # bottom_coal, res = single_coal_opt(bottom_up_full_info,buildings,max_coal_size,1)
-res, _ = coal_MPC(bottom_up_full_info,buildings,max_coal_size)
+res, _, num_iters = coal_MPC(bottom_up_full_info,buildings,max_coal_size)
 
 t10 = time()
 
 # println("In full-info bottom-up coalition ",bottom_coal, " agents pay ", res)
 println("In full-info bottom-up coalition agents pay ", res)
 println("Computation took ", t10-t9,"s")
+println("Required average of ", num_iters, " iterations")
+
 println("-------------")
 
 
@@ -97,7 +107,7 @@ if num_builds <= 8 #takes about 20 mins on laptop to execute 8
 
     t5 = time()
     # opt_coal, res = single_coal_opt(find_opt_coal,buildings,max_coal_size,1)
-    res, _ = coal_MPC(find_opt_coal,buildings,max_coal_size)
+    res, _, num_iters = coal_MPC(find_opt_coal,buildings,max_coal_size)
 
     # opt_coal = find_opt_coal(buildings,max_coal_size,1)
     t6 = time()
@@ -105,6 +115,8 @@ if num_builds <= 8 #takes about 20 mins on laptop to execute 8
     # println("In optimal coalition ",opt_coal, " agents pay ", res)
     println("In optimal coalition agents pay ", res)
     println("Computation took ", t6-t5,"s")
+    println("Required average of ", num_iters, " iterations")
+
 end
 
 

@@ -1,4 +1,8 @@
-using CSV
+try
+    using CSV
+catch
+    using CSV
+end
 using DataFrames
 using Dates
 using Statistics
