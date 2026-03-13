@@ -317,11 +317,10 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
         # end
         #res = [sum(value(out[5])) for out in outs]
 		# _, res = single_optimise(opt, bs, k)
-		for (out,agent) in zip(outs, coal)
+		for (res,agent) in zip(outs, coal)
             if !(coal isa Vector{Vector{MPC_Building}})
                 agent = buildings[agent]
             end
-            res = out
 			if !(agent isa MPC_Building)
 				for (i,b) in enumerate(agent)
 					if k < num_steps
