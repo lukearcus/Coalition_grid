@@ -1,7 +1,3 @@
-using JuMP, SCS
-using LinearAlgebra
-using Combinatorics
-
 include("Buildings.jl")
 include("MPC_optimiser.jl")
 include("Coalition.jl")
@@ -12,9 +8,9 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 6
-max_coal_size = 3
-num_steps = 2
+num_builds = 2
+max_coal_size = 2
+num_steps = 1
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
 buildings, energy_cost, energy_sale = load_from_CSV(num_builds,num_steps)
@@ -26,7 +22,6 @@ plot_use(use_data)
 # println("test")
 
 # res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size)
-
 
 println("-------------")
 

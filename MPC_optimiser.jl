@@ -1,3 +1,6 @@
+using JuMP, SCS
+using LinearAlgebra
+
 include("Buildings.jl")
 struct MPC_optimiser
     energy_cost::Array{Float64}
@@ -332,6 +335,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 					else
 						buy[k,b.id]=-remaining
 					end
+					println(remaining)
 				end
 			else
 				b = agent
@@ -344,10 +348,10 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 				else
 					buy[k,b.id]=-remaining
 				end
+				println(remaining)
 			end
 		end
 	end
-
 	if num_steps <= 96
 		buy_cost = opt.energy_cost[1:num_steps]
 		sell_price = opt.energy_sale[1:num_steps]

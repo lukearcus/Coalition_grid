@@ -1,4 +1,6 @@
 include("MPC_optimiser.jl")
+using Combinatorics
+
 
 function find_opt_coal(buildings::Vector{Building}, max_coal_size::Int)
     possible_coals = collect(partitions(buildings))
