@@ -8,7 +8,7 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 2
+num_builds = 3
 max_coal_size = 2
 num_steps = 1
 
@@ -22,6 +22,14 @@ plot_use(use_data)
 # println("test")
 
 # res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size)
+println("-------------")
+
+t9 = time()
+# private_coal = bottom_up_full_info(buildings,max_coal_size,1)
+# bottom_coal, res = single_coal_opt(bottom_up_full_info,buildings,max_coal_size,1)
+res, _, num_iters = coal_MPC(bottom_up_full_info,buildings,max_coal_size)
+
+t10 = time()
 
 println("-------------")
 

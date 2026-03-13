@@ -348,7 +348,6 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 				else
 					buy[k,b.id]=-remaining
 				end
-				println(remaining)
 			end
 		end
 	end

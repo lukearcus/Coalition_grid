@@ -141,14 +141,17 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
 		    end
 	    end
 	    if valid_coal
-            coal_res = single_optimise_ADMM(opt,ind_coal,k)
-            num_iters += coal_res[2]
-            obj_val = sum(coal_res[1][5])
-		    coal_vals[coal] = sum([obj_val for ind_coal in coal])
+            obj_val = 0
+            for ind_coal in coal
+                coal_res = single_optimise_ADMM(opt,ind_coal,k)
+                num_iters += coal_res[2]
+                obj_val += sum(value(coal_res[1][5]))
+            end
+            coal_vals[coal] = obj_val
 	    end
     end
     sorted_coal_vals = sort!(collect(coal_vals), by=last)
-    outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in sorted_coal_vals[1][1]] #can do this in the loop, so don't count these iters
+    outs = [single_optimise_ADMM(opt, agent, k)[1] for agent in sorted_coal_vals[1][1]] #can do this in the loop, so don't count these iters
     return sorted_coal_vals[1][1], outs, num_iters#, sorted_coal_vals[1][2]
 end
 
@@ -159,12 +162,11 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     num_iters = sum([out[2] for out in outs])
 
     coal_vars = Dict()
-    poss_coal_vals = Dict()
+    coal_vals = Dict()
     for (out, agent) in zip(outs, agents)
-        coal_vars[[agent]] = out[1]
-        poss_coal_vals[[agent]] = sum(value(out[1][5]))
+        coal_vars[agent] = out[1]
+        coal_vals[[agent]] = sum(value(out[1][5]))
     end
-
     while !done
         done = true
         #for agent in agents
@@ -173,6 +175,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
         
 
         poss_coals = collect(combinations(agents,2))
+        poss_coal_vals = Dict()
         for c in poss_coals
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
@@ -190,7 +193,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
             else
                 c_2 = c[2]
             end
-            poss_coal_vals[c] = -((poss_coal_vals[c_1])+( poss_coal_vals[c_2]))+ obj_val #added poss_coal_vals c[1] c[2] - joint to better discriminate
+            poss_coal_vals[c] = -((coal_vals[c_1])+(coal_vals[c_2]))+ obj_val #added poss_coal_vals c[1] c[2] - joint to better discriminate
             # poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(obj_val) #added res c[1] c[2] - joint to better discriminate
         end
         sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
@@ -203,6 +206,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
                 if length(new_coal) <= max_coal_size
                     push!(new_agents, new_coal)
                     push!(coaled_agents, elem[1][1], elem[1][2])
+                    coal_vals[new_coal] = poss_coal_vals[new_coal]
                     done = false
                 end
             end
