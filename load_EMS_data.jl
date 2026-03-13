@@ -14,7 +14,7 @@ max_builds = 70
 
 #println(meta)
 
-function load_from_CSV(num_builds::Int,num_steps::Int)
+function MPC_load_from_CSV(num_builds::Int,num_steps::Int)
     meta = CSV.read("data/metadata.csv", DataFrame)
     if num_builds < 1
         num_builds = 1
@@ -56,6 +56,49 @@ function load_from_CSV(num_builds::Int,num_steps::Int)
 
     return builds, buy, sell
 end
+function load_from_CSV(num_builds::Int,num_steps::Int)
+    meta = CSV.read("data/metadata.csv", DataFrame)
+    if num_builds < 1
+        num_builds = 1
+    elseif num_builds > max_builds
+        num_builds = max_builds
+    end
+    if num_steps < 1
+        num_steps = 1
+    end
+    builds = Vector{Building}()
+
+    for i in 1:num_builds
+        filename = "cleaned_data/"*string(i)*".csv"
+        file = CSV.read(filename, DataFrame, delim=",")
+        if num_steps > nrow(file)
+            num_steps = nrow(file)
+        end
+        #Currently, use only predicted data from day 1, site loc is randomly assigned,
+        # battery power and charge efficiencies stored but not implemented
+        build = Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), CSV.File(filename; select=[3]).actual_consumption_mean[1:num_steps], CSV.File(filename; select=[4]).actual_pv_mean[1:num_steps], meta[i,:capacity], meta[i,:power], meta[i,:charge_efficiency],meta[i,:discharge_efficiency],i)
+        push!(builds, build)
+        #println(collect(file[1, Cols(x -> startswith(x, "load_"))]))
+    end
+    filename = "cleaned_data/"*string(1)*".csv"
+    file = CSV.read(filename, DataFrame, delim=",")
+    start = split(split(file[1,:DateTime],"+")[1], "T")[2]
+
+    price_file = CSV.read("data/edf_prices.csv", DataFrame)
+    start_ind = 0
+    for i in 1:nrow(price_file)
+        if price_file[i,1] == Time(start)
+            start_ind = i
+            break
+        end
+    end
+    # println(start_ind)
+    buy = collect(price_file[start_ind:start_ind+95,:buy])
+    sell = collect(price_file[start_ind:start_ind+95,:sell])
+
+    return builds, buy, sell
+end
+
 function clean_data(start_t::Int,num_steps::Int)
     @eval CSV.Parsers import Base.Ryu: writeshortest
     start = DateTime(2012)
@@ -88,6 +131,8 @@ function clean_data(start_t::Int,num_steps::Int)
         CSV.write(cleaned_filename, master)
     end
 end
+
+
 
 function find_starts(num_steps::Int)
 

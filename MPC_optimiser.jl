@@ -18,15 +18,15 @@ function energy_sale_k(opt::MPC_optimiser, k::Int, num_steps::Int=96)
 end
 
 
-function optimise(opt::MPC_optimiser,bs::Vector{Building})
+function optimise(opt::MPC_optimiser,bs::Vector{Building},ADMM::Bool=true,receding_horizon::Bool=false)
 	num_builds = bs.size[1]
 	model = Model(SCS.Optimizer)
 	num_steps = length(consumption(bs[1]))
 	set_silent(model)
 	
-	max_flow = repeat(hcat([max_flow(b) for b in bs])', num_steps, 1)
-	@variable(model, 0<=pos_delta_s[t=1:num_steps, b=1:num_builds]<=max_flow[t,b])
-	@variable(model, -max_flow[t,b]<=neg_delta_s[t=1:num_steps, b=1:num_builds]<=0)
+	max_flow_val = repeat(hcat([max_flow(b) for b in bs])', num_steps, 1)
+	@variable(model, 0<=pos_delta_s[t=1:num_steps, b=1:num_builds]<=max_flow_val[t,b])
+	@variable(model, -max_flow_val[t,b]<=neg_delta_s[t=1:num_steps, b=1:num_builds]<=0)
 	@variable(model, delta_s[1:num_steps,1:num_builds])
 	@constraint(model, charge_sum, delta_s == pos_delta_s+neg_delta_s)
 	
@@ -38,7 +38,7 @@ function optimise(opt::MPC_optimiser,bs::Vector{Building})
 	#println(capacities)
 	#println(capacities.size)
 	@variable(model, 0 <= charge[t=1:num_steps, b=1:num_builds] <= capacities[t,b])
-	@constraint(model, init_charge, charge[0,:]==[b.SoC[k] for b in bs])
+	@constraint(model, init_charge, charge[1,:]==[0 for b in bs])
 	@variable(model, costs[1:num_builds])
 
 	charge_mat = hcat(vcat(zeros(num_steps-1)',I(num_steps-1)),zeros(num_steps))
@@ -64,10 +64,10 @@ function optimise(opt::MPC_optimiser,bs::Vector{Building})
 	optimize!(model)
 	#println(sum(value(neg_delta_s.*pos_delta_s)))
 
-	return model, [delta_s, grid_cons, grid_sell, charge, costs]
+	return sum(value(costs)), [delta_s, grid_cons, grid_sell, charge, costs], 1
 end
 
-function optimise(opt::MPC_optimiser,b::Building)
+function optimise(opt::MPC_optimiser,b::Building,ADMM::Bool=true,receding_horizon::Bool=false)
 	return optimise(opt,[b])
 end
 
@@ -244,7 +244,7 @@ function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_hori
 	return single_optimise(opt,[b],k,receding_horizon)
 end
 
-function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true)
+function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true,receding_horizon::Bool=false)
 	num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
@@ -257,10 +257,10 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true)
 		# println(sum(value(res[5])))
 
 		if ADMM
-			res, num_iters_k = single_optimise_ADMM(opt, bs, k)
+			res, num_iters_k = single_optimise_ADMM(opt, bs, k,receding_horizon)
 			num_iters += num_iters_k
 		else
-			model, res = single_optimise(opt, bs, k)
+			model, res = single_optimise(opt, bs, k,receding_horizon)
 			num_iters += 1
 		end
 		for (i, b) in enumerate(bs)
@@ -292,9 +292,9 @@ function single_coal_opt(coal_former::Function,bs::Vector{MPC_Building}, max_coa
     # println(coal)
     # println(typeof(coal))
     if coal isa Vector{Vector{MPC_Building}}
-        outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
+        outs = [single_optimise(opt, agent, k) for agent in coal]
     else
-        outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in coal]
+        outs = [single_optimise(opt, buildings[agent], k) for agent in coal]
     end
     res = [sum(objective_value(out[1])) for out in outs]
     return coal, sum(res)
@@ -304,14 +304,14 @@ end
 # 	return 1, itt
 # end
 
-function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int)
+function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,receding_horizon::Bool=false)
     num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	num_iters = 0
 	for k = 1:num_steps
-        coal, outs, num_iters_k = coal_former(bs,max_coal_size,k)
+        coal, outs, num_iters_k = coal_former(bs,max_coal_size,k,receding_horizon)
 		num_iters += num_iters_k
         # if coal isa Vector{Vector{MPC_Building}}
         #     outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
@@ -322,7 +322,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 		# _, res = single_optimise(opt, bs, k)
 		for (res,agent) in zip(outs, coal)
             if !(coal isa Vector{Vector{MPC_Building}})
-                agent = buildings[agent]
+                agent = bs[agent]
             end
 			if !(agent isa MPC_Building)
 				for (i,b) in enumerate(agent)

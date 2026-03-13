@@ -14,7 +14,12 @@ function find_opt_coal(buildings::Vector{Building}, max_coal_size::Int)
 		    end
 	    end
 	    if valid_coal
-		    coal_vals[coal] = sum([objective_value(optimise(opt,ind_coal)[1]) for ind_coal in coal])
+            obj_val=0
+            for ind_coal in coal
+                coal_res = optimise(opt,ind_coal)
+                obj_val += sum(value(coal_res[2][5]))
+            end
+            coal_vals[coal] = obj_val
 	    end
     end
     sorted_coal_vals = sort!(collect(coal_vals), by=last)
@@ -24,6 +29,15 @@ end
 function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
     agents = Vector(1:length(buildings))
     done = false
+    outs = [optimise(opt, buildings[agent]) for agent in agents]
+    num_iters = 1
+
+    coal_vars = Dict()
+    coal_vals = Dict()
+    for (out, agent) in zip(outs, agents)
+        coal_vars[agent] = out[1]
+        coal_vals[[agent]] = sum(value(out[2][5]))
+    end
     while !done
         done = true
         #for agent in agents
@@ -35,10 +49,25 @@ function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
 
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
+        poss_coal_vars = Dict()
         for c in poss_coals
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
-            poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(objective_value(optimise(opt, buildings[poss_coal_vec])[1])) #added res c[1] c[2] - joint to better discriminate
+            coal_res = optimise(opt, buildings[poss_coal_vec])
+            obj_val = sum(value(coal_res[2][5]))
+            poss_coal_vars[c] = coal_res[1]
+            if c[1] isa Int64
+                c_1 = [c[1]]
+            else
+                c_1 = c[1]
+            end
+            if c[2] isa Int64
+                c_2 = [c[2]]
+            else
+                c_2 = c[2]
+            end
+            poss_coal_vals[c] = -((coal_vals[c_1])+(coal_vals[c_2]))+ obj_val
+            # poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(objective_value(optimise(opt, buildings[poss_coal_vec])[1])) #added res c[1] c[2] - joint to better discriminate
         end
         sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         new_agents = Vector()
@@ -50,6 +79,8 @@ function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
                 if length(new_coal) <= max_coal_size
                     push!(new_agents, new_coal)
                     push!(coaled_agents, elem[1][1], elem[1][2])
+                    coal_vals[new_coal] = poss_coal_vals[elem[1]]
+                    coal_vars[new_coal] = poss_coal_vars[elem[1]]
                     done = false
                 end
             end
@@ -64,12 +95,9 @@ function bottom_up_full_info(buildings::Vector{Building}, max_coal_size::Int)
         #println(sorted_coal_vals)
         #update cons_vec
     end
-    #println(cons_vec)
-    #println("cons ", value(vars[2][2]))
-    #println("sell ", vars[1][3])
-    outs = [optimise(opt, buildings[agent]) for agent in agents]
-    res = [sum(objective_value(out[1])) for out in outs]
-    return agents, sum(res), num_iters
+
+    return agents, [coal_vars[agent] for agent in agents], num_iters
+
 end
 
 function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
@@ -122,13 +150,17 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
     end
     #println(cons_vec)
     #println("cons ", value(vars[2][2]))
-    #println("sell ", vars[1][3])
+    # #println("sell ", vars[1][3])
+    # outs = [optimise(opt, buildings[agent]) for agent in agents]
+    # res = [sum(objective_value(out[1])) for out in outs]
+    # println(agents)
     outs = [optimise(opt, buildings[agent]) for agent in agents]
-    res = [sum(objective_value(out[1])) for out in outs]
-    return agents, sum(res)
+    res = [out[1] for out in outs]
+    vars = [sum(value(out[2][5])) for out in outs]
+    return agents, vars, 1
 end
 
-function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::Int)
+function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::Int,receding_horizon::Bool=false)
     possible_coals = collect(partitions(buildings))
     coal_vals = Dict()
     num_iters = 0
@@ -143,7 +175,7 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
 	    if valid_coal
             obj_val = 0
             for ind_coal in coal
-                coal_res = single_optimise_ADMM(opt,ind_coal,k)
+                coal_res = single_optimise_ADMM(opt,ind_coal,k,receding_horizon)
                 num_iters += coal_res[2]
                 obj_val += sum(value(coal_res[1][5]))
             end
@@ -155,10 +187,10 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
     return sorted_coal_vals[1][1], outs, num_iters#, sorted_coal_vals[1][2]
 end
 
-function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int)
+function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,receding_horizon::Bool=false)
     agents = Vector(1:length(buildings))
     done = false
-    outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in agents]
+    outs = [single_optimise_ADMM(opt, buildings[agent], k,receding_horizon) for agent in agents]
     num_iters = sum([out[2] for out in outs])
 
     coal_vars = Dict()
@@ -176,13 +208,14 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
 
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
+        poss_coal_vars = Dict()
         for c in poss_coals
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
-            coal_res = single_optimise_ADMM(opt, buildings[poss_coal_vec], k)
+            coal_res = single_optimise_ADMM(opt, buildings[poss_coal_vec], k,receding_horizon)
             num_iters += coal_res[2]
             obj_val = sum(value(coal_res[1][5]))
-            coal_vars[c] = coal_res[1]
+            poss_coal_vars[c] = coal_res[1]
             if c[1] isa Int64
                 c_1 = [c[1]]
             else
@@ -206,7 +239,8 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
                 if length(new_coal) <= max_coal_size
                     push!(new_agents, new_coal)
                     push!(coaled_agents, elem[1][1], elem[1][2])
-                    coal_vals[new_coal] = poss_coal_vals[new_coal]
+                    coal_vals[new_coal] = poss_coal_vals[elem[1]]
+                    coal_vars[new_coal] = poss_coal_vars[elem[1]]
                     done = false
                 end
             end
@@ -229,7 +263,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     return agents, [coal_vars[agent] for agent in agents], num_iters
 end
 
-function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int)
+function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,receding_horizon::Bool=false)
     agents = Vector(1:length(buildings))
     done = false
     energy_diff = opt.energy_cost-opt.energy_sale
@@ -240,7 +274,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         #for agent in agents
         #    println(optimise(opt, buildings[agent])[1])
         #end
-        outs = [single_optimise_ADMM(opt, buildings[agent], k) for agent in agents]
+        outs = [single_optimise_ADMM(opt, buildings[agent], k,receding_horizon) for agent in agents]
         num_iters += sum([out[2] for out in outs])
         #res = [out[1] for out in outs]
         vars = [out[1] for out in outs]
