@@ -12,8 +12,10 @@ include("../load_EMS_data.jl")
 include("../plotting.jl")
 
 num_builds = 70
-max_coal_size = 1
+max_coal_size = 6
 num_steps = 96
+num_ahead=8
+
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
 all_buildings, energy_cost, energy_sale = load_from_CSV(num_builds,num_steps)
@@ -27,12 +29,16 @@ opt = MPC_optimiser(energy_cost', energy_sale')
 data = DataFrame(num_builds=[],average_cost=[],num_iters=[],time=[])
 
 for num_builds in 2:70
-    buildings = all_buildings[1:num_builds]
-    t1 = time()
-    res, vars, num_iters = optimise(opt, buildings)
-    t2 = time()
+    try
+        buildings = all_buildings[1:num_builds]
+        t1 = time()
+        res, vars, num_iters = optimise(opt, buildings,num_ahead)
+        t2 = time()
 
-    runtime= t2-t1
-    push!(data, [num_builds,res/num_builds,num_iters,runtime])
-    CSV.write("results/central_ADMM_var_num_builds.csv", data)
+        runtime= t2-t1
+        push!(data, [num_builds,res/num_builds,num_iters,runtime])
+        CSV.write("results/central_ADMM_var_num_builds.csv", data)
+    catch
+        println("failed at ", num_builds)
+    end
 end

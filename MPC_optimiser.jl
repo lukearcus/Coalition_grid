@@ -71,13 +71,12 @@ function optimise(opt::MPC_optimiser,b::Building,ADMM::Bool=true,receding_horizo
 	return optimise(opt,[b])
 end
 
-function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,receding_horizon::Bool=false)
+function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
 	num_builds = bs.size[1]
 	model = Model(SCS.Optimizer)
+	num_steps = num_look_ahead
 	if !receding_horizon
-		num_steps = length(bs[1].act_cons)-k+1
-	else
-		num_steps = length(pred_consumption(bs[1],k))
+		num_steps = min(length(bs[1].act_cons)-k+1,num_steps)
 	end
 	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
 	num_steps = max(num_steps, 1)
@@ -114,6 +113,10 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,rece
 	# 	println(b.SoC)
 	# 	println(k)
 	# end
+	# println(charge_mat)
+	#println([b.SoC[k] for b in bs])
+	#println(k)
+	# println(init_charge_mat)
 	@constraint(model, charge_c, charge .== charge_mat*charge+charge_mat*(pos_delta_s.*charge_eff_vec')+charge_mat*(neg_delta_s.*discharge_eff_vec')+init_charge_mat)
 
 	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
@@ -200,64 +203,71 @@ function ADMM_coal_update(lambda::Vector{Vector{Float64}},proposed_coals::Vector
 	return model, coal_exch
 end
 
-function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,receding_horizon::Bool=false)
+function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
 	num_builds = bs.size[1]
 	if num_builds == 1
-		return single_optimise(opt,bs,k,receding_horizon)[2], 1
+		return single_optimise(opt,bs,k,num_look_ahead,receding_horizon)[2], 1
 	end
 	if !receding_horizon
-		num_steps = length(bs[1].act_cons)-k+1
+		num_steps = min(length(bs[1].act_cons)-k+1, num_look_ahead)
 	else
-		num_steps = length(pred_consumption(bs[1],k))
+		num_steps = num_look_ahead
 	end
 	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
 	num_steps = max(num_steps, 1)
-	c=0.1
+	c=0.5
 	new_coal = zeros(num_steps,num_builds)
-	proposed_coal =[ones(num_steps) for i in 1:num_builds]
+	proposed_coal =[zeros(num_steps) for i in 1:num_builds]
 	lambdas = [zeros(num_steps) for i in 1:num_builds]
-	states = false
 	num_iters_admm = 1
 	# need a solution in case not converged (use new_coal)
 	poss_sol = proposed_coal
-	while norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5
-		# c *= 1.1
-		res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
-		states = [r[2] for r in res]
-		proposed_coal = [value(state[6]) for state in states]
+	let states = Vector{Any}(undef,num_builds)
+		while (norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5) | (num_iters_admm <= 1)
+			# c *= 1.1
+			res = Vector{Any}(undef,num_builds)
+			Threads.@threads for ind in 1:num_builds
+				res[ind] = ADMM_build_opt(bs[ind],new_coal[:,ind],lambdas[ind],k,c)
+			end
+			# res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
+			states = [r[2] for r in res]
+			proposed_coal = [value(state[6]) for state in states]
 
-		model, new_coal = ADMM_coal_update(lambdas,proposed_coal,c)
-		new_coal = value(new_coal)
+			model, new_coal = ADMM_coal_update(lambdas,proposed_coal,c)
+			new_coal = value(new_coal)
+			if !any(isnan,new_coal)
+				poss_sol = new_coal
+			end
 
-		if !any(isnan,new_coal)
-			poss_sol = new_coal
+			lambdas = [lambda + c*(prop_coal-new_coal[:,ind]) for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
+			num_iters_admm += 1
+			# if num_iters_admm > 1000
+			# 	println("Convergence failed")
+			# 	break
+			# end
+			# println(proposed_coal)
+			# z update
+			#lambda update
 		end
-
-		lambdas = [lambda + c*(prop_coal-new_coal[:,ind]) for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
-		num_iters_admm += 1
-		if num_iters_admm > 100
-			println("Convergence failed")
-			break
+		# if num_iters_admm < 1000
+		# 	println("Converged in limit")
+		# end
+		for state in states
+			state[6] = poss_sol
 		end
-		# println(proposed_coal)
-		# z update
-		#lambda update
-	end
-	for state in states
-		state[6] = poss_sol
-	end
-	states = [reduce(hcat,[state[i] for state in states]) for i in 1:length(states[1])]
-	return states, num_iters_admm
+		states = [reduce(hcat,[state[i] for state in states]) for i in 1:length(states[1])]
+		return states, num_iters_admm
+	end	
 end
 
-function single_optimise_ADMM(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_horizon::Bool=false)
-	return single_optimise_ADMM(opt,[b],k,receding_horizon)
+function single_optimise_ADMM(opt::MPC_optimiser,b::MPC_Building,k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+	return single_optimise_ADMM(opt,[b],k,num_look_ahead,receding_horizon)
 end
-function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int,receding_horizon::Bool=false)
-	return single_optimise(opt,[b],k,receding_horizon)
+function single_optimise(opt::MPC_optimiser,b::MPC_Building,k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+	return single_optimise(opt,[b],k,num_look_ahead,receding_horizon)
 end
 
-function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true,receding_horizon::Bool=false)
+function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},num_look_ahead::Int,ADMM::Bool=true,receding_horizon::Bool=false)
 	num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
@@ -270,15 +280,16 @@ function optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},ADMM::Bool=true,re
 		# println(sum(value(res[5])))
 
 		if ADMM
-			res, num_iters_k = single_optimise_ADMM(opt, bs, k,receding_horizon)
+			res, num_iters_k = single_optimise_ADMM(opt, bs, k,num_look_ahead,receding_horizon)
 			num_iters += num_iters_k
 		else
-			model, res = single_optimise(opt, bs, k,receding_horizon)
+			model, res = single_optimise(opt, bs, k,num_look_ahead,receding_horizon)
 			num_iters += 1
 		end
 		for (i, b) in enumerate(bs)
 			if k < num_steps
 				b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
+				#println(b.SoC[k+1])
 			end
 			remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
 			if remaining > 0
@@ -317,14 +328,14 @@ end
 # 	return 1, itt
 # end
 
-function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,receding_horizon::Bool=false)
+function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	num_iters = 0
 	for k = 1:num_steps
-        coal, outs, num_iters_k = coal_former(bs,max_coal_size,k,receding_horizon)
+        coal, outs, num_iters_k = coal_former(bs,max_coal_size,k,num_look_ahead,receding_horizon)
 		num_iters += num_iters_k
         # if coal isa Vector{Vector{MPC_Building}}
         #     outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
@@ -342,18 +353,20 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 					if k < num_steps
 						b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
 					end
-					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
+					# println(b.SoC)
+					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+
+					res[1][1,i])
 					if remaining > 0
 						sell[k,b.id] = remaining
 					else
 						buy[k,b.id]=-remaining
 					end
-					println(remaining)
+					# println(remaining)
 				end
 			else
 				b = agent
 				if k < num_steps
-					b.SoC[k+1] = value(res[4][2,1]) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
+					b.SoC[k+1] = max(0,value(res[4][2,1])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
 				end
 				remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,1]+res[1][1,1])
 				if remaining > 0

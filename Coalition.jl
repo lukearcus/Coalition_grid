@@ -160,7 +160,7 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
     return agents, vars, 1
 end
 
-function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::Int,receding_horizon::Bool=false)
+function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     possible_coals = collect(partitions(buildings))
     coal_vals = Dict()
     num_iters = 0
@@ -175,7 +175,7 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
 	    if valid_coal
             obj_val = 0
             for ind_coal in coal
-                coal_res = single_optimise_ADMM(opt,ind_coal,k,receding_horizon)
+                coal_res = single_optimise_ADMM(opt,ind_coal,k,num_look_ahead,receding_horizon)
                 num_iters += coal_res[2]
                 obj_val += sum(value(coal_res[1][5]))
             end
@@ -187,10 +187,10 @@ function find_opt_coal(buildings::Vector{MPC_Building}, max_coal_size::Int,k::In
     return sorted_coal_vals[1][1], outs, num_iters#, sorted_coal_vals[1][2]
 end
 
-function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,receding_horizon::Bool=false)
+function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     agents = Vector(1:length(buildings))
     done = false
-    outs = [single_optimise_ADMM(opt, buildings[agent], k,receding_horizon) for agent in agents]
+    outs = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
     num_iters = sum([out[2] for out in outs])
 
     coal_vars = Dict()
@@ -212,7 +212,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
         for c in poss_coals
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
-            coal_res = single_optimise_ADMM(opt, buildings[poss_coal_vec], k,receding_horizon)
+            coal_res = single_optimise_ADMM(opt, buildings[poss_coal_vec], k,num_look_ahead,receding_horizon)
             num_iters += coal_res[2]
             obj_val = sum(value(coal_res[1][5]))
             poss_coal_vars[c] = coal_res[1]
@@ -263,7 +263,7 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     return agents, [coal_vars[agent] for agent in agents], num_iters
 end
 
-function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,receding_horizon::Bool=false)
+function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     agents = Vector(1:length(buildings))
     done = false
     energy_diff = opt.energy_cost-opt.energy_sale
@@ -274,7 +274,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         #for agent in agents
         #    println(optimise(opt, buildings[agent])[1])
         #end
-        outs = [single_optimise_ADMM(opt, buildings[agent], k,receding_horizon) for agent in agents]
+        outs = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
         num_iters += sum([out[2] for out in outs])
         #res = [out[1] for out in outs]
         vars = [out[1] for out in outs]
@@ -284,10 +284,10 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
         for c in poss_coals
-            num_steps = length(buildings[1].act_cons)-k+1
-            compatible_slots = (cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]])))[1:num_steps]
+            num_look_ahead = min(length(buildings[1].act_cons)-k+1, num_look_ahead)
+            compatible_slots = (cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]])))[1:num_look_ahead]
             if any(compatible_slots)
-                poss_coal_vals[c] = energy_diff[1:num_steps]'*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
+                poss_coal_vals[c] = energy_diff[1:num_look_ahead]'*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
                 #poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
             end
         end

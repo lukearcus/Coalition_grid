@@ -14,6 +14,7 @@ include("../plotting.jl")
 num_builds =70
 max_coal_size = 1
 num_steps = 96
+num_ahead = 8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
 buildings, energy_cost, energy_sale = load_from_CSV(num_builds,num_steps)
@@ -27,11 +28,15 @@ opt = MPC_optimiser(energy_cost', energy_sale')
 data = DataFrame(max_size=[],average_cost=[],num_iters=[],time=[])
 
 for max_coal_size in 2:70
-    t1 = time()
-    res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size)
-    t2 = time()
+    try
+        t1 = time()
+        res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_ahead)
+        t2 = time()
 
-    runtime= t2-t1
-    push!(data, [max_coal_size,res/num_builds,num_iters,runtime])
-    CSV.write("results/private_var_size", data)
+        runtime= t2-t1
+        push!(data, [max_coal_size,res/num_builds,num_iters,runtime])
+        CSV.write("results/private_var_size", data)
+    catch
+        println("Failed at", max_coal_size)
+    end
 end
