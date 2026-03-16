@@ -218,6 +218,8 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	lambdas = [zeros(num_steps) for i in 1:num_builds]
 	states = false
 	num_iters_admm = 1
+	# need a solution in case not converged (use new_coal)
+	poss_sol = proposed_coal
 	while norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5
 		# c *= 1.1
 		res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
@@ -227,11 +229,22 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 		model, new_coal = ADMM_coal_update(lambdas,proposed_coal,c)
 		new_coal = value(new_coal)
 
+		if !any(isnan,new_coal)
+			poss_sol = new_coal
+		end
+
 		lambdas = [lambda + c*(prop_coal-new_coal[:,ind]) for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
 		num_iters_admm += 1
+		if num_iters_admm > 100
+			println("Convergence failed")
+			break
+		end
 		# println(proposed_coal)
 		# z update
 		#lambda update
+	end
+	for state in states
+		state[6] = poss_sol
 	end
 	states = [reduce(hcat,[state[i] for state in states]) for i in 1:length(states[1])]
 	return states, num_iters_admm
