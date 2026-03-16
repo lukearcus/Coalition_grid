@@ -17,7 +17,7 @@ num_steps = 96
 num_ahead=8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
-all_buildings, energy_cost, energy_sale = load_from_CSV(num_builds,num_steps)
+all_buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds,num_steps)
 
 opt = MPC_optimiser(energy_cost', energy_sale')
 
