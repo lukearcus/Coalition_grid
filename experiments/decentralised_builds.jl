@@ -31,7 +31,7 @@ for num_builds in 2:70
     try
         buildings = all_buildings[1:num_builds]
         t1 = time()
-        outs = [optimise(opt, [building]), num_ahead for building in buildings]
+        outs = [optimise(opt, [building], num_ahead) for building in buildings]
         t2 = time()
 
         res = [out[1] for out in outs]
