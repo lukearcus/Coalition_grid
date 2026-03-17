@@ -11,7 +11,7 @@ include("../Coalition.jl")
 include("../load_EMS_data.jl")
 include("../plotting.jl")
 
-num_builds = 70
+num_builds = 20
 max_coal_size = 6
 num_steps = 96
 num_ahead=8
@@ -27,7 +27,7 @@ opt = MPC_optimiser(energy_cost', energy_sale')
 
 data = DataFrame(max_size=[],average_cost=[],num_iters=[],time=[])
 
-for max_coal_size in 2:70
+for max_coal_size in 2:20
     try
     buildings = all_buildings
     t1 = time()
