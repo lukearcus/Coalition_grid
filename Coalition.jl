@@ -269,17 +269,21 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
     energy_diff = opt.energy_cost-opt.energy_sale
     num_iters=0
     vars = 0
-    dec_outs_single = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
-    dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in outs ]
+    dec_single_vals = 0
+    # dec_outs_single = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon)[1] for agent in agents]
+    # dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in dec_outs_single]
     while !done
         done = true
         #for agent in agents
         #    println(optimise(opt, buildings[agent])[1])
         #end
         outs = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
+        vars = [out[1] for out in outs]
+        if num_iters == 0
+            dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in vars]
+        end
         num_iters += sum([out[2] for out in outs])
         #res = [out[1] for out in outs]
-        vars = [out[1] for out in outs]
 
         cons_vec = Dict([agent=> vec(sum(value(var[2]-var[3]),dims=2)) for (agent, var) in zip(agents,vars)])
 
@@ -318,7 +322,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         #update cons_vec
     end
     for (agent, var) in zip(agents,vars)
-        dec_val = sum(dec_single_vals[i] for i in agent)
+        dec_val = sum(sum(dec_single_vals[i] for i in agent))
         coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
         if dec_val < coal_single_val
             println("Decentralised offers improvement on first step!!!")
