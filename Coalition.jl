@@ -269,6 +269,8 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
     energy_diff = opt.energy_cost-opt.energy_sale
     num_iters=0
     vars = 0
+    dec_outs_single = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
+    dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in outs ]
     while !done
         done = true
         #for agent in agents
@@ -314,6 +316,13 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         agents = new_agents
         #println(sorted_coal_vals)
         #update cons_vec
+    end
+    for (agent, var) in zip(agents,vars)
+        dec_val = sum(dec_single_vals[i] for i in agent)
+        coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
+        if dec_val < coal_single_val
+            println("Decentralised offers improvement on first step!!!")
+        end
     end
     #println(cons_vec)
     #println("cons ", value(vars[2][2]))

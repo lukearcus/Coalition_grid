@@ -9,13 +9,15 @@ include("plotting.jl")
 
 
 num_builds = 70
-max_coal_size = 7
-num_steps =8
+max_coal_size = 6
+num_steps =96
 num_look_ahead = 8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
 buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds,num_steps)
 opt = MPC_optimiser(energy_cost', energy_sale')
+
+res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
 
 println("-------------")
 
