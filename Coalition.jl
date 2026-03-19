@@ -321,13 +321,17 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         #println(sorted_coal_vals)
         #update cons_vec
     end
+    num_problems = 0
     for (agent, var) in zip(agents,vars)
-        dec_val = sum(sum(dec_single_vals[i] for i in agent))
-        coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
-        if dec_val < coal_single_val
-            println("Decentralised offers improvement on first step!!!")
+        if length(agent) > 1
+            dec_val = sum(sum(dec_single_vals[i] for i in agent))
+            coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
+            if dec_val < coal_single_val
+                num_problems += 1
+            end
         end
     end
+    println("At timestep ", k, ", decentralised offers improvement on first step for ", num_problems, " coalitions")
     #println(cons_vec)
     #println("cons ", value(vars[2][2]))
     #println("sell ", vars[1][3])
