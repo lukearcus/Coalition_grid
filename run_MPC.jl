@@ -8,7 +8,7 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 70
+num_builds = 24
 max_coal_size = 6
 num_steps =96
 num_look_ahead = 8
@@ -18,6 +18,8 @@ buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds,num_steps)
 opt = MPC_optimiser(energy_cost', energy_sale')
 
 res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+println("In private coalitions agents pay ", res)
+
 
 # println("-------------")
 
