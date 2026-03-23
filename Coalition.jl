@@ -323,6 +323,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
     end
     num_problems = 0
     new_agents = Vector()
+    added = false
     for (agent, var) in zip(agents,vars)
         added = false
         if length(agent) > 1
