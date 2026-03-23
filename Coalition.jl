@@ -340,6 +340,9 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
             push!(new_agents,agent)
         end
     end
+    if added
+        agents = new_agents
+    end
     outs = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon) for agent in agents]
     vars = [out[1] for out in outs]
     # println("At timestep ", k, ", decentralised offers improvement on first step for ", num_problems, " coalitions")
