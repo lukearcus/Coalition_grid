@@ -330,7 +330,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
             coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
             if dec_val >= coal_single_val
                 push!(new_agents, agent)
-                added = True
+                added = true
             else
                 for i in agent
                     push!(new_agents, i)
