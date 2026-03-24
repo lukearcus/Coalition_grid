@@ -8,17 +8,23 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 24
+num_builds = 6
 max_coal_size = 6
-num_steps =96
+num_steps =8
 num_look_ahead = 8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
 buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds,num_steps)
 opt = MPC_optimiser(energy_cost', energy_sale')
 
-res, _, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+use_data = [b.act_cons-b.act_prod for b in buildings]
+plot_use(use_data)
+
+res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
 println("In private coalitions agents pay ", res)
+
+use_data = vars[1]-vars[2]
+plot_use(use_data)
 
 
 # println("-------------")
