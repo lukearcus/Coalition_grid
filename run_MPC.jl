@@ -8,9 +8,9 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 6
+num_builds = 24
 max_coal_size = 6
-num_steps =8
+num_steps =96
 num_look_ahead = 8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
@@ -24,6 +24,7 @@ res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,n
 println("In private coalitions agents pay ", res)
 
 use_data = vars[1]-vars[2]
+use_data = [use_data[i,:] for i in 1:size(use_data,2)]
 plot_use(use_data)
 
 
