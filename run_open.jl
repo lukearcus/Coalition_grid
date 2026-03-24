@@ -8,7 +8,7 @@ include("plotting.jl")
 # energy_sale = 0.5*energy_cost 
 
 
-num_builds = 70
+num_builds = 8
 max_coal_size = 7
 num_steps = 96
 
