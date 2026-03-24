@@ -54,7 +54,7 @@ function MPC_load_from_CSV(num_builds::Int,num_steps::Int)
     buy = collect(price_file[start_ind:start_ind+95,:buy])
     sell = collect(price_file[start_ind:start_ind+95,:sell])
 
-    return builds, buy, sell
+    return builds, buy, sell, file[1:num_steps, "DateTime"]
 end
 function load_from_CSV(num_builds::Int,num_steps::Int)
     meta = CSV.read("data/metadata.csv", DataFrame)
