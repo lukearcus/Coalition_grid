@@ -10,7 +10,7 @@ include("plotting.jl")
 
 num_builds = 10
 max_coal_size = 6
-num_steps =96
+num_steps =10
 num_look_ahead = 8
 
 #buildings = [Building((rand(Float64, 1)[1], rand(Float64, 1)[1]), rand(Float64, 24), rand(Float64, 24), rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],rand(Float16, 1)[1],i) for i = 1:num_builds]
@@ -33,7 +33,10 @@ println("-------------")
 t9 = time()
 # private_coal = bottom_up_full_info(buildings,max_coal_size,1)
 # bottom_coal, res = single_coal_opt(bottom_up_full_info,buildings,max_coal_size,1)
-res, _, num_iters = coal_MPC(bottom_up_full_info,buildings,max_coal_size,num_look_ahead)
+res, _, num_iters, coal_stab_bottom = coal_MPC(bottom_up_full_info,buildings,max_coal_size,num_look_ahead)
+res, vars, num_iters, coal_stab_private = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+plot_stab_score([coal_stab_bottom,coal_stab_private],timestamps)
+
 # coal, outs, num_iters =bottom_up_full_info(buildings,max_coal_size)
 # res = sum(outs)
 

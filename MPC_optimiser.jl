@@ -328,12 +328,43 @@ end
 # 	return 1, itt
 # end
 
+function coal_stability_score(coal,old_coal)
+	bs = reduce(vcat, coal)
+	num_builds = length(bs)
+
+	z_sum = 0
+	for i in 1:num_builds
+		for j in i+1:num_builds # wrong, needs to be from i to N
+			together = false
+			for agent in coal
+				if bs[i] in agent && bs[j] in agent
+					together = true
+					break
+				end
+			end
+			old_together = false
+			for agent in old_coal
+				if bs[i] in agent && bs[j] in agent
+					if together 
+						old_together = true
+						break
+					end
+				end
+			end
+			z_sum += (together==old_together)
+		end
+	end
+	return z_sum/binomial(num_builds,2)
+end
+
 function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	num_iters = 0
+	old_coal = 0
+	stab_score = []
 	for k = 1:num_steps
         coal, outs, num_iters_k = coal_former(bs,max_coal_size,k,num_look_ahead,receding_horizon)
 		num_iters += num_iters_k
@@ -344,6 +375,12 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
         # end
         #res = [sum(value(out[5])) for out in outs]
 		# _, res = single_optimise(opt, bs, k)
+		if k > 1
+			curr_stability_score =coal_stability_score(coal, old_coal)
+			append!(stab_score,curr_stability_score)
+			# println(stability_score)
+		end
+		old_coal = coal
 		for (res,agent) in zip(outs, coal)
             if !(coal isa Vector{Vector{MPC_Building}})
                 agent = bs[agent]
@@ -385,5 +422,5 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 		sell_price = hcat(repeat(opt.energy_sale,num_steps÷96), opt.energy_sale[1:(num_steps%96)])'
 	end
 	cost = sum(buy_cost'*buy-sell_price'*sell)
-	return cost, [buy, sell], num_iters/num_steps
+	return cost, [buy, sell], num_iters/num_steps, stab_score
 end
