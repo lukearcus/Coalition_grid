@@ -28,26 +28,26 @@ use_data = [b.act_cons-b.act_prod for b in buildings]
 # plot_use(use_data, timestamps)
 
 
-println("-------------")
+# println("-------------")
 
-t9 = time()
-# private_coal = bottom_up_full_info(buildings,max_coal_size,1)
-# bottom_coal, res = single_coal_opt(bottom_up_full_info,buildings,max_coal_size,1)
-res, _, num_iters, coal_stab_bottom = coal_MPC(bottom_up_full_info,buildings,max_coal_size,num_look_ahead)
-res, vars, num_iters, coal_stab_private = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
-plot_stab_score([coal_stab_bottom,coal_stab_private],timestamps)
+# t9 = time()
+# # private_coal = bottom_up_full_info(buildings,max_coal_size,1)
+# # bottom_coal, res = single_coal_opt(bottom_up_full_info,buildings,max_coal_size,1)
+# res, _, num_iters, coal_stab_bottom = coal_MPC(bottom_up_full_info,buildings,max_coal_size,num_look_ahead)
+# res, vars, num_iters, coal_stab_private = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+# plot_stab_score([coal_stab_bottom,coal_stab_private],timestamps)
 
-# coal, outs, num_iters =bottom_up_full_info(buildings,max_coal_size)
-# res = sum(outs)
+# # coal, outs, num_iters =bottom_up_full_info(buildings,max_coal_size)
+# # res = sum(outs)
 
-t10 = time()
+# t10 = time()
 
-# println("In full-info bottom-up coalition ",bottom_coal, " agents pay ", res)
-println("In full-info bottom-up coalition agents pay ", res)
-println("Computation took ", t10-t9,"s")
-println("Required average of ", num_iters, " iterations")
+# # println("In full-info bottom-up coalition ",bottom_coal, " agents pay ", res)
+# println("In full-info bottom-up coalition agents pay ", res)
+# println("Computation took ", t10-t9,"s")
+# println("Required average of ", num_iters, " iterations")
 
-println("-------------")
+# println("-------------")
 
 # println("-------------")
 
@@ -101,19 +101,19 @@ println("-------------")
 # println("-------------")
 
 
-# t7 = time()
-# # private_coal = privacy_focussed_coals(buildings,max_coal_size,1)
-# # private_coal, res = single_coal_opt(privacy_focussed_coals,buildings,max_coal_size,1)
-# res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
-# # coal, outs, num_iters = privacy_focussed_coals(buildings,max_coal_size)
-# # res = sum(outs)
+t7 = time()
+# private_coal = privacy_focussed_coals(buildings,max_coal_size,1)
+# private_coal, res = single_coal_opt(privacy_focussed_coals,buildings,max_coal_size,1)
+res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+# coal, outs, num_iters = privacy_focussed_coals(buildings,max_coal_size)
+# res = sum(outs)
 
-# t8 = time()
+t8 = time()
 
-# # println("In private coalition ",private_coal, " agents pay ", res)
-# println("In private coalitions agents pay ", res)
-# println("Computation took ", t8-t7,"s")
-# println("Required average of ", num_iters, " iterations")
+# println("In private coalition ",private_coal, " agents pay ", res)
+println("In private coalitions agents pay ", res)
+println("Computation took ", t8-t7,"s")
+println("Required average of ", num_iters, " iterations")
 
 # use_data = vars[1]-vars[2]
 # use_data = [use_data[:,i] for i in 1:size(use_data,2)]
