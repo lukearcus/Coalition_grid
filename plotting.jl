@@ -20,6 +20,19 @@ function plot_use(use_data::Vector{Vector{Float64}}, times)
     savefig(string("results/",length(use_data),"_building_use_plot.pdf"))   
 end
 
+function plot_cost(prices::Vector{Vector{Float64}}, times)
+    scalefontsizes()
+     default(fontfamily="Computer Modern",
+        linewidth=2, framestyle=:box, label=nothing, grid=false)
+    scalefontsizes(1.4)
+    times = [split(split(t,"+")[1],"T")[2] for t in times]
+    # x = range(1, length(use_data[1]))
+    plot(times,prices,xrotation=60,margin=5mm,label=["Buy" "Sell"])
+    xlabel!("Timestep")
+    ylabel!("Price")
+    savefig(string("results/",length(prices[1]),"_price_plot.pdf"))   
+end
+
 function plot_stab_score(stab_scores::Vector{Vector{Any}}, times)
     times = times[2:length(times)]
     scalefontsizes()

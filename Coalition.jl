@@ -132,7 +132,7 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
         delta_u = 1 # change this!
         println("Needs edit")
         epsilon = 1e-1
-        weights = [exp(epsilon*i[2]/(2*delta_u)) for i in sorted_coal_vals]
+        weights = [Float64(exp(epsilon*i[2]/(2*delta_u))) for i in sorted_coal_vals]
         poss_coals_for_samples = [elem[1] for elem in sorted_coal_vals]
         while not done
             elem = sample(poss_coal_vals, Weights(weights))
@@ -321,17 +321,37 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
                 #poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
             end
         end
-        sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
+        # sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
+        #
         new_agents = Vector()
         coaled_agents = Vector()
         done = false
+        if length(poss_coal_vals) == 0
+            new_agents = agents
+            break
+        end
         delta_u = 1 # change this!
         println("Needs edit")
         epsilon = 1e-1
-        weights = [exp(epsilon*i[2]/(2*delta_u)) for i in sorted_coal_vals]
-        poss_coals_for_samples = [elem[1] for elem in sorted_coal_vals]
-        while !done
-            elem = sample(poss_coal_vals, Weights(weights))
+        # keylist = keys(poss_coal_vals)
+        # weights = Vector{Float64}(undef, length(keylist))
+        # for i in eachindex(keylist)
+        #     weights[i] = Float64(exp(epsilon*poss_coal_vals[keylist[i]]/(2*delta_u)))
+        # end
+        # # weights = [Float64(exp(epsilon*i[2]/(2*delta_u))) for i in sorted_coal_vals]
+        #     weights[i] = Float64(exp(epsilon*poss_coal_vals[i]/(2*delta_u)))
+        # end
+        # weights = [Float64(exp(epsilon*i[2]/(2*delta_u))) for i in sorted_coal_vals]
+        # poss_coals_for_samples = collect(keylist)
+        coal_weights = Dict([i => exp(epsilon*poss_coal_vals[i]/(2*delta_u)) for i in keys(poss_coal_vals)])
+        ks = collect(keys(coal_weights))
+        weights = [coal_weights[k] for k in ks]
+        while true
+            # println(weights)
+            elem = sample(ks, Weights(weights))
+            # weights = [coal_weights[k] for k in keys(coal_weights)]
+            # elem = sample(collect(keys(coal_weights)), Weights(convert(Array{Float64,1}, collect(values(coal_weights)))))
+            # elem = sample(collect(values(poss_coal_vals)), Weights(weights))
             if !(elem[1] in coaled_agents) && !(elem[2] in coaled_agents)
                 new_coal = Vector()
                 append!(new_coal, elem[1], elem[2])
@@ -340,11 +360,12 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
                     push!(coaled_agents, elem[1], elem[2])
                 end
             end
-            ind = findfirst(==(elem), poss_coal_vals)
-            poss_coals_for_samples = vcat(poss_coals_for_samples[1:ind-1], poss_coals_for_samples[ind+1:length(poss_coals_for_samples)])
+            ind = findfirst(==(elem), ks)
+            ks = vcat(ks[1:ind-1], ks[ind+1:length(ks)])
+            # poss_coals_for_samples = vcat(poss_coals_for_samples[1:ind-1], poss_coals_for_samples[ind+1:length(poss_coals_for_samples)])
             weights = vcat(weights[1:ind-1], weights[ind+1:length(weights)])
-            if length(poss_coals_for_samples) == 0
-                done = true
+            if length(ks) == 0
+                break
             end
         end
         # for elem in sorted_coal_vals
