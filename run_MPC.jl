@@ -7,7 +7,7 @@ include("plotting.jl")
 # energy_cost = transpose(rand(Float64, 24))
 # energy_sale = 0.5*energy_cost 
 
-num_builds = 10
+num_builds = 8
 max_coal_size = 6
 num_steps =96
 num_look_ahead = 96

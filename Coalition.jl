@@ -331,7 +331,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
             break
         end
         delta_u = 1 # change this!
-        println("Needs edit")
+        # println("Needs edit")
         epsilon = 1e-1
         # keylist = keys(poss_coal_vals)
         # weights = Vector{Float64}(undef, length(keylist))
