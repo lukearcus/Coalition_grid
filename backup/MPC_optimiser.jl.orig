@@ -203,124 +203,6 @@ function ADMM_coal_update(lambda::Vector{Vector{Float64}},proposed_coals::Vector
 	return model, coal_exch
 end
 
-# P3.1: Model-reusing variants. Build JuMP model once per (building, k, horizon),
-# then on each ADMM iteration only the objective parameters (lambda, coal_trades)
-# are updated via set_parameter_value. SCS reuses its internal factorisation.
-
-struct ADMMBuildCache
-	model::Model
-	delta_s::Vector{VariableRef}
-	grid_cons::Vector{VariableRef}
-	grid_sell::Vector{VariableRef}
-	charge::Vector{VariableRef}
-	cost::VariableRef
-	coal_exch::Vector{VariableRef}
-	lam::Vector{VariableRef}
-	ct::Vector{VariableRef}
-end
-
-function ADMM_build_opt_init(b::MPC_Building, k::Int, num_steps::Int)
-	model = Model(SCS.Optimizer)
-	set_silent(model)
-	# P3.2: Relax SCS tolerance — the outer ADMM already converges to 1e-5,
-	# so each per-iteration SCS solve doesn't need to be tight. Cuts SCS iters ~3x.
-	set_optimizer_attribute(model, "eps_abs", 1e-2)
-	set_optimizer_attribute(model, "eps_rel", 1e-2)
-
-	max_flow_val = ones(num_steps).*max_flow(b)
-	@variable(model, 0<=pos_delta_s[t=1:num_steps]<=max_flow_val[t])
-	@variable(model, -max_flow_val[t]<=neg_delta_s[t=1:num_steps]<=0)
-	@variable(model, delta_s[1:num_steps])
-	@constraint(model, charge_sum, delta_s == pos_delta_s+neg_delta_s)
-
-	@variable(model, grid_cons[1:num_steps] >= 0)
-	@variable(model, grid_sell[1:num_steps] >= 0)
-
-	@variable(model, coal_exch[1:num_steps])
-	capacities = ones(num_steps).*max_store(b)
-	@variable(model, 0 <= charge[t=1:num_steps] <= capacities[t])
-	@variable(model, cost)
-
-	# P3.1: lambda and coal_trades as Parameters so SCS reuses factorisation across iters
-	@variable(model, lam[1:num_steps] in Parameter.(zeros(num_steps)))
-	@variable(model, ct[1:num_steps] in Parameter.(zeros(num_steps)))
-
-	charge_mat = hcat(vcat(zeros(num_steps-1)',I(num_steps-1)),zeros(num_steps))
-	charge_eff_vec = charge_eff(b)'
-	discharge_eff_vec = 1/discharge_eff(b)'
-	init_charge_mat = vcat(b.SoC[k]',zeros(num_steps-1,1))
-
-	@constraint(model, charge_c, charge .== charge_mat*charge+charge_mat*(pos_delta_s.*charge_eff_vec')+charge_mat*(neg_delta_s.*discharge_eff_vec')+init_charge_mat)
-	@constraint(model, final_delta_c, delta_s[num_steps, :] >= -charge[num_steps, :])
-
-	consumps = pred_consumption(b,k,num_steps)
-	prods = pred_production(b,k,num_steps)
-	@constraint(model, power_c, consumps+grid_sell+delta_s+coal_exch.==prods+grid_cons)
-	@constraint(model, cost_c, cost==energy_cost_k(opt,k,num_steps)'*grid_cons-energy_sale_k(opt,k,num_steps)'*grid_sell)
-
-	# Objective with parameters; c is fixed at 0.5 within an ADMM run
-	c = 0.5
-	@objective(model, Min, cost + lam'coal_exch + (c/2)*(coal_exch-ct)'*(coal_exch-ct))
-
-	return ADMMBuildCache(model, delta_s, grid_cons, grid_sell, charge, cost, coal_exch, lam, ct)
-end
-
-function ADMM_build_opt_solve(cache::ADMMBuildCache, coal_trades::Vector{Float64}, lambda::Vector{Float64}, c::Float64)
-	# Update only parameter values; model structure and SCS factorisation are reused
-	for i in eachindex(lambda)
-		set_parameter_value(cache.lam[i], lambda[i])
-		set_parameter_value(cache.ct[i], coal_trades[i])
-	end
-	# P3.2: Warm-start SCS from the previous primal solution to cut solver iterations
-	if has_values(cache.model)
-		for v in all_variables(cache.model)
-			set_start_value(v, value(v))
-		end
-	end
-	optimize!(cache.model)
-	return [cache.delta_s, cache.grid_cons, cache.grid_sell, cache.charge, cache.cost, cache.coal_exch]
-end
-
-struct ADMMCoalCache
-	model::Model
-	coal_exch::Matrix{VariableRef}
-	lam::Matrix{VariableRef}
-	prop::Matrix{VariableRef}
-end
-
-function ADMM_coal_update_init(num_builds::Int, num_steps::Int)
-	model = Model(SCS.Optimizer)
-	set_silent(model)
-	# P3.2: Relax SCS tolerance (matches the per-building subproblem)
-	set_optimizer_attribute(model, "eps_abs", 1e-2)
-	set_optimizer_attribute(model, "eps_rel", 1e-2)
-	@variable(model, coal_exch[1:num_steps,1:num_builds])
-	@constraint(model, coal_c, coal_exch*ones(num_builds).==0)
-	# Parameters for lambda and proposed_coals
-	@variable(model, lam[1:num_steps,1:num_builds] in Parameter.(zeros(num_steps, num_builds)))
-	@variable(model, prop[1:num_steps,1:num_builds] in Parameter.(zeros(num_steps, num_builds)))
-	c = 0.5
-	@objective(model, Min, -sum(lam.*coal_exch)+(c/2)*sum((prop-coal_exch).*(prop-coal_exch)))
-	return ADMMCoalCache(model, coal_exch, lam, prop)
-end
-
-function ADMM_coal_update_solve(cache::ADMMCoalCache, lambda::Vector{Vector{Float64}}, proposed_coals::Vector{Vector{Float64}}, c::Float64)
-	for ind in eachindex(lambda)
-		for t in eachindex(lambda[ind])
-			set_parameter_value(cache.lam[t, ind], lambda[ind][t])
-			set_parameter_value(cache.prop[t, ind], proposed_coals[ind][t])
-		end
-	end
-	# P3.2: Warm-start SCS from previous primal solution
-	if has_values(cache.model)
-		for v in all_variables(cache.model)
-			set_start_value(v, value(v))
-		end
-	end
-	optimize!(cache.model)
-	return value.(cache.coal_exch)
-end
-
 function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
 	num_builds = bs.size[1]
 	if num_builds == 1
@@ -340,27 +222,19 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	num_iters_admm = 1
 	# need a solution in case not converged (use new_coal)
 	poss_sol = proposed_coal
-	# P3.1: Build per-building and coal-update models ONCE; reuse across ADMM iterations.
-	build_caches = [ADMM_build_opt_init(b, k, num_steps) for b in bs]
-	coal_cache = ADMM_coal_update_init(num_builds, num_steps)
-	# P3.3: Max-iteration cap so a non-converging coalition can't blow up the whole run.
-	# Convergence check uses a relative residual scaled to the SCS tolerance (1e-2),
-	# so the outer ADMM stops when SCS solve noise dominates further progress.
-	max_admm_iters = 100
-	rel_tol = 1e-3
 	let states = Vector{Any}(undef,num_builds)
-		while (norm(reduce(hcat, proposed_coal).-new_coal) / (norm(reduce(hcat, proposed_coal)) + 1e-10) > rel_tol) | (num_iters_admm <= 1)
-			if num_iters_admm > max_admm_iters
-				break
-			end
+		while (norm(reduce(hcat, proposed_coal).-new_coal) > 1e-5) | (num_iters_admm <= 1)
 			# c *= 1.1
-		states = Vector{Any}(undef,num_builds)
-		for ind in 1:num_builds
-			states[ind] = ADMM_build_opt_solve(build_caches[ind], new_coal[:,ind], lambdas[ind], c)
-		end
+			res = Vector{Any}(undef,num_builds)
+			Threads.@threads for ind in 1:num_builds
+				res[ind] = ADMM_build_opt(bs[ind],new_coal[:,ind],lambdas[ind],k,c)
+			end
+			# res = [ADMM_build_opt(b,new_coal[:,ind],lambda,k,c) for ( b, lambda, ind) in zip(bs,lambdas, 1:num_builds)]
+			states = [r[2] for r in res]
 			proposed_coal = [value(state[6]) for state in states]
 
-			new_coal = ADMM_coal_update_solve(coal_cache, lambdas, proposed_coal, c)
+			model, new_coal = ADMM_coal_update(lambdas,proposed_coal,c)
+			new_coal = value(new_coal)
 			if !any(isnan,new_coal)
 				poss_sol = new_coal
 			end
@@ -514,13 +388,11 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 			if !(agent isa MPC_Building)
 				for (i,b) in enumerate(agent)
 					if k < num_steps
-						# P3.3: guard against NaN from a non-converged SCS solve
-						next_soc = value(res[4][2,i])
-						b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
+						b.SoC[k+1] = max(0,value(res[4][2,i])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
 					end
 					# println(b.SoC)
-					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
-					isnan(remaining) && (remaining = 0.0)
+					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+
+					res[1][1,i])
 					if remaining > 0
 						sell[k,b.id] = remaining
 					else
@@ -531,11 +403,9 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 			else
 				b = agent
 				if k < num_steps
-					next_soc = value(res[4][2,1])
-					b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
+					b.SoC[k+1] = max(0,value(res[4][2,1])) #value(res[2][1,i]-res[3][1,i]-res[6][1,i])-b.act_cons[k]+b.act_prod[k]
 				end
 				remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,1]+res[1][1,1])
-				isnan(remaining) && (remaining = 0.0)
 				if remaining > 0
 					sell[k,b.id] = remaining
 				else
