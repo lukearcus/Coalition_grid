@@ -292,12 +292,11 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     return agents, [coal_vars[agent] for agent in agents], num_iters
 end
 
-function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0)
     agents = Vector(1:length(buildings))
     done = false
     energy_diff = opt.energy_cost-opt.energy_sale
     # Compute correct delta_u bound: max timestep difference (buy price - sell price) * delta_G
-    delta_G = 100 # User-defined parameter
     max_price_diff = maximum(abs.(opt.energy_cost - opt.energy_sale))
     delta_u = delta_G * max_price_diff
     num_iters=0
@@ -492,4 +491,9 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
         end
     end
     return agents, vars, num_iters
+end
+
+function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+    # Wrapper for backward compatibility with existing code
+    return privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_ahead, receding_horizon, 100.0)
 end
