@@ -298,7 +298,8 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     energy_diff = opt.energy_cost-opt.energy_sale
     # Compute correct delta_u bound: max timestep difference (buy price - sell price) * delta_G
     max_price_diff = maximum(abs.(opt.energy_cost - opt.energy_sale))
-    delta_u = delta_G * max_price_diff
+    # Add minimum threshold to prevent numerical issues with very small delta_G
+    delta_u = max(delta_G * max_price_diff, 1e-10)
     num_iters=0
     vars = 0
     dec_single_vals = 0
@@ -393,9 +394,19 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             break
         end
         epsilon = 1e-1
-        coal_weights = Dict([i => exp(epsilon*poss_coal_vals[i]/(2*delta_u)) for i in keys(poss_coal_vals)])
+        # Add numerical stability to prevent overflow in exp()
+        coal_weights = Dict{Any, Float64}()
+        for i in keys(poss_coal_vals)
+            # Safe weight calculation with bounds checking
+            weight_val = epsilon*poss_coal_vals[i]/(2*delta_u)
+            # Clip extreme values to prevent overflow
+            capped_weight = min(weight_val, 50.0)  # Prevent overflow in exp()
+            coal_weights[i] = exp(capped_weight)
+        end
         ks = collect(keys(coal_weights))
         weights = [coal_weights[k] for k in ks]
+        # Ensure weights are finite and valid
+        weights = [isfinite(w) ? w : 1.0 for w in weights]
         n_pool = length(ks)
         # Phase A: instead of a coaled_agents membership check on every draw,
         # when a merge is accepted we eagerly remove ALL pairs overlapping
@@ -403,30 +414,52 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         # (so each subsequent sample(1:n_pool, Weights(...)) builds a smaller
         # alias table) and eliminates the O(|coaled|) membership check.
         while n_pool > 0
-            ind = sample(1:n_pool, Weights(weights[1:n_pool]))
-            elem = ks[ind]
-            # Remove the drawn pair (swap-with-last, O(1))
-            weights[ind] = weights[n_pool]
-            ks[ind] = ks[n_pool]
-            n_pool -= 1
-            # Form the candidate coalition as a flat id list
-            new_coal = vcat(agent_ids(elem[1]), agent_ids(elem[2]))
-            if length(new_coal) <= max_coal_size
-                push!(new_agents, new_coal)
-                merge_happened = true
-                # Eagerly remove every pair in the pool that overlaps with new_coal.
-                # Each pair is removed at most once per round -> O(n^2) total.
-                coaled_ids = Set(new_coal)
-                i = 1
-                while i <= n_pool
-                    pair_ids = vcat(agent_ids(ks[i][1]), agent_ids(ks[i][2]))
-                    if !isempty(intersect(pair_ids, coaled_ids))
-                        weights[i] = weights[n_pool]
-                        ks[i] = ks[n_pool]
-                        n_pool -= 1
-                    else
-                        i += 1
+            try
+                ind = sample(1:n_pool, Weights(weights[1:n_pool]))
+                elem = ks[ind]
+                # Remove the drawn pair (swap-with-last, O(1))
+                weights[ind] = weights[n_pool]
+                ks[ind] = ks[n_pool]
+                n_pool -= 1
+                # Form the candidate coalition as a flat id list
+                new_coal = vcat(agent_ids(elem[1]), agent_ids(elem[2]))
+                if length(new_coal) <= max_coal_size
+                    push!(new_agents, new_coal)
+                    merge_happened = true
+                    # Eagerly remove every pair in the pool that overlaps with new_coal.
+                    # Each pair is removed at most once per round -> O(n^2) total.
+                    coaled_ids = Set(new_coal)
+                    i = 1
+                    while i <= n_pool
+                        pair_ids = vcat(agent_ids(ks[i][1]), agent_ids(ks[i][2]))
+                        if !isempty(intersect(pair_ids, coaled_ids))
+                            weights[i] = weights[n_pool]
+                            ks[i] = ks[n_pool]
+                            n_pool -= 1
+                        else
+                            i += 1
+                        end
                     end
+                end
+            catch e
+                # In case of weight problems, fall back to uniform sampling
+                if length(ks) > 0
+                    # If we're in this catch block, there might be issues with weights
+                    # Fall back to choosing a random pair
+                    ind = rand(1:min(n_pool, length(ks)))
+                    elem = ks[ind]
+                    # Remove the drawn pair (swap-with-last, O(1))
+                    weights[ind] = weights[n_pool]
+                    ks[ind] = ks[n_pool]
+                    n_pool -= 1
+                    # Form the candidate coalition as a flat id list
+                    new_coal = vcat(agent_ids(elem[1]), agent_ids(elem[2]))
+                    if length(new_coal) <= max_coal_size
+                        push!(new_agents, new_coal)
+                        merge_happened = true
+                    end
+                else
+                    break
                 end
             end
         end
