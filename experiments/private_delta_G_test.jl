@@ -22,7 +22,7 @@ all_buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds, num_step
 opt = MPC_optimiser(energy_cost', energy_sale')
 
 # Test delta_G values from 0.01 to 1000 in increments of about 100 (10 values total) 
-delta_G_values = range(0.01, 1000, length=10)
+delta_G_values = range(0.01, 500, length=100)
 num_repeats = 10
 
 # Initialize results DataFrame
