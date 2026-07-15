@@ -1,3 +1,0 @@
-/sw-eb/software/Julia/1.11.6-linux-x86_64/bin/julia: line 2: 2467132 Killed                  LD_LIBRARY_PATH="$EBROOTJULIA/lib:$EBROOTJULIA/lib/julia:$LD_LIBRARY_PATH" julia.bin "$@"
-Cgroup mem limit exceeded: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=1927258.pbs-7,mems_allowed=0-7,oom_memcg=/pbs_jobs.service/jobid/1927258.pbs-7,task_memcg=/pbs_jobs.service/jobid/1927258.pbs-7,task=julia.bin,pid=2467132,uid=1913931
-
