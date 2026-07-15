@@ -1,0 +1,4 @@
+=>> PBS: job killed: walltime 259206 exceeded limit 259200
+
+[2467024] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/central_ADMM_builds.jl:31

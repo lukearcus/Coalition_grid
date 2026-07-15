@@ -1,0 +1,21 @@
+ERROR: LoadError: ArgumentError: Package StatsBase not found in current path.
+- Run `import Pkg; Pkg.add("StatsBase")` to install the StatsBase package.
+Stacktrace:
+ [1] macro expansion
+   @ ./loading.jl:2296 [inlined]
+ [2] macro expansion
+   @ ./lock.jl:273 [inlined]
+ [3] __require(into::Module, mod::Symbol)
+   @ Base ./loading.jl:2271
+ [4] #invoke_in_world#3
+   @ ./essentials.jl:1089 [inlined]
+ [5] invoke_in_world
+   @ ./essentials.jl:1086 [inlined]
+ [6] require(into::Module, mod::Symbol)
+   @ Base ./loading.jl:2260
+ [7] include(fname::String)
+   @ Main ./sysimg.jl:38
+ [8] top-level scope
+   @ ~/code/Coalition_grid/run_MPC.jl:3
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/Coalition.jl:3
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/run_MPC.jl:3

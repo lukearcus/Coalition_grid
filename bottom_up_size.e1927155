@@ -1,0 +1,13 @@
+ERROR: LoadError: MethodError: no method matching coal_MPC(::typeof(bottom_up_full_info), ::Vector{Building}, ::Int64)
+The function `coal_MPC` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  coal_MPC(::Function, !Matched::Vector{MPC_Building}, ::Int64, !Matched::Bool)
+   @ Main ~/code/Coalition_grid/MPC_optimiser.jl:320
+  coal_MPC(::Function, !Matched::Vector{MPC_Building}, ::Int64)
+   @ Main ~/code/Coalition_grid/MPC_optimiser.jl:320
+
+Stacktrace:
+ [1] top-level scope
+   @ ~/code/Coalition_grid/experiments/bottom_size.jl:32
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/bottom_size.jl:29

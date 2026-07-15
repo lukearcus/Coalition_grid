@@ -1,0 +1,46 @@
+
+[530980] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/bottom_builds.jl:19
+_finddelimiter at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:0 [inlined]
+checkemptysentinel at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:38 [inlined]
+#9 at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:12 [inlined]
+_xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:407 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:418 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+parsevalue! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:782 [inlined]
+parserow at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:610 [inlined]
+parsefilechunk! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:556
+unknown function (ip: 0x1461bbb1d6c7)
+File at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:290
+File at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:227 [inlined]
+#File#32 at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:223 [inlined]
+File at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:162
+unknown function (ip: 0x1461bbb21a35)
+load_from_CSV at /rds/general/user/lbrickar/home/code/Coalition_grid/load_EMS_data.jl:79
+unknown function (ip: 0x1461bbb124ec)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+do_call at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/interpreter.c:126
+eval_value at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/interpreter.c:223
+eval_stmt_value at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/interpreter.c:174 [inlined]
+eval_body at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/interpreter.c:666
+jl_interpret_toplevel_thunk at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/interpreter.c:824
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:943
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:562
+jfptr_include_46943.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73597.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at julia.bin (unknown line)
+__libc_start_main at /lib64/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 53812242 (Pool: 53811732; Big: 510); GC: 98

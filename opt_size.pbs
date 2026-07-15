@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=2:mem=8gb
+#PBS -l walltime=72:00:00
+#PBS -N opt_size
+
+module load Julia
+
+cd $PBS_O_WORKDIR
+
+julia experiments/bottom_builds.jl 
+
+#julia experiments/bottom_size.jl &
+#julia experiments/central_ADMM_builds.jl &
+#julia experiments/central_builds.jl &
+#julia experiments/decentralised_builds.jl &
+#julia experiments/decentralised_size.jl &
+#julia experiments/opt_builds.jl &
+julia --threads=auto experiments/opt_size.jl 
+#julia experiments/private_builds.jl &
+#julia experiments/private_size.jl &

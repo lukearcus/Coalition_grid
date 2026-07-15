@@ -1,0 +1,61 @@
+ERROR: LoadError: Expression contains an invalid NaN constant. This could be produced by `Inf - Inf`.
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:35
+  [2] _assert_isfinite(a::AffExpr)
+    @ JuMP ~/.julia/packages/JuMP/0tD10/src/aff_expr.jl:717
+  [3] MathOptInterface.ScalarAffineFunction(a::AffExpr)
+    @ JuMP ~/.julia/packages/JuMP/0tD10/src/aff_expr.jl:752
+  [4] moi_function
+    @ ~/.julia/packages/JuMP/0tD10/src/aff_expr.jl:861 [inlined]
+  [5] moi_function
+    @ ~/.julia/packages/JuMP/0tD10/src/constraints.jl:760 [inlined]
+  [6] add_constraint(model::Model, con::ScalarConstraint{AffExpr, MathOptInterface.EqualTo{Float64}}, name::String)
+    @ JuMP ~/.julia/packages/JuMP/0tD10/src/constraints.jl:1038
+  [7] _broadcast_getindex_evalf
+    @ ./broadcast.jl:678 [inlined]
+  [8] _broadcast_getindex
+    @ ./broadcast.jl:651 [inlined]
+  [9] getindex
+    @ ./broadcast.jl:610 [inlined]
+ [10] macro expansion
+    @ ./broadcast.jl:973 [inlined]
+ [11] macro expansion
+    @ ./simdloop.jl:77 [inlined]
+ [12] copyto!
+    @ ./broadcast.jl:972 [inlined]
+ [13] copyto!
+    @ ./broadcast.jl:925 [inlined]
+ [14] copy
+    @ ./broadcast.jl:897 [inlined]
+ [15] materialize(bc::Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{2}, Nothing, typeof(add_constraint), Tuple{Base.RefValue{Model}, Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{2}, Nothing, typeof(model_convert), Tuple{Base.RefValue{Model}, Base.Broadcast.Broadcasted{Base.Broadcast.DefaultArrayStyle{2}, Nothing, typeof(build_constraint), Tuple{Base.RefValue{JuMP.Containers.var"#error_fn#100"{LineNumberNode, String}}, Matrix{AffExpr}, Base.RefValue{Zeros}}}}}, Base.RefValue{String}}})
+    @ Base.Broadcast ./broadcast.jl:872
+ [16] macro expansion
+    @ ~/.julia/packages/JuMP/0tD10/src/macros/@constraint.jl:163 [inlined]
+ [17] macro expansion
+    @ ~/.julia/packages/JuMP/0tD10/src/macros.jl:402 [inlined]
+ [18] single_optimise(opt::MPC_optimiser, bs::Vector{MPC_Building}, k::Int64, num_look_ahead::Int64, receding_horizon::Bool)
+    @ Main ~/code/Coalition_grid/MPC_optimiser.jl:120
+ [19] single_optimise_ADMM(opt::MPC_optimiser, bs::Vector{MPC_Building}, k::Int64, num_look_ahead::Int64, receding_horizon::Bool)
+    @ Main ~/code/Coalition_grid/MPC_optimiser.jl:209
+ [20] single_optimise_ADMM
+    @ ~/code/Coalition_grid/MPC_optimiser.jl:264 [inlined]
+ [21] (::var"#231#237"{Vector{MPC_Building}, Int64, Bool})(agent::Int64)
+    @ Main ./none:0
+ [22] iterate
+    @ ./generator.jl:48 [inlined]
+ [23] collect_to!(dest::Vector{Tuple{Vector{Array{VariableRef}}, Int64}}, itr::Base.Generator{Vector{Int64}, var"#231#237"{Vector{MPC_Building}, Int64, Bool}}, offs::Int64, st::Int64)
+    @ Base ./array.jl:849
+ [24] collect_to_with_first!(dest::Vector{Tuple{Vector{Array{VariableRef}}, Int64}}, v1::Tuple{Vector{Array{VariableRef}}, Int64}, itr::Base.Generator{Vector{Int64}, var"#231#237"{Vector{MPC_Building}, Int64, Bool}}, st::Int64)
+    @ Base ./array.jl:827
+ [25] collect(itr::Base.Generator{Vector{Int64}, var"#231#237"{Vector{MPC_Building}, Int64, Bool}})
+    @ Base ./array.jl:801
+ [26] privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int64, k::Int64, num_look_ahead::Int64, receding_horizon::Bool)
+    @ Main ~/code/Coalition_grid/Coalition.jl:280
+ [27] coal_MPC(coal_former::typeof(privacy_focussed_coals), bs::Vector{MPC_Building}, max_coal_size::Int64, num_look_ahead::Int64, receding_horizon::Bool)
+    @ Main ~/code/Coalition_grid/MPC_optimiser.jl:338
+ [28] coal_MPC(coal_former::Function, bs::Vector{MPC_Building}, max_coal_size::Int64, num_look_ahead::Int64)
+    @ Main ~/code/Coalition_grid/MPC_optimiser.jl:332
+ [29] top-level scope
+    @ ~/code/Coalition_grid/run_MPC.jl:20
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/run_MPC.jl:20

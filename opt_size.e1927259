@@ -1,0 +1,36 @@
+
+[532813] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/bottom_builds.jl:31
+empty! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Bridges/bridge_optimizer.jl:382
+unknown function (ip: 0x7fffca3040cf)
+copy_to at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Bridges/bridge_optimizer.jl:448 [inlined]
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/MathOptInterface.jl:121 [inlined]
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/cachingoptimizer.jl:370
+unknown function (ip: 0x14bf3215e4b2)
+#optimize!#105 at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:610
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:560 [inlined]
+ADMM_coal_update at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:201
+single_optimise_ADMM at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:236
+bottom_up_full_info at /rds/general/user/lbrickar/home/code/Coalition_grid/Coalition.jl:215
+coal_MPC at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:338
+coal_MPC at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:332 [inlined]
+top-level scope at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/bottom_builds.jl:35
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:562
+jfptr_include_46943.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73597.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at julia.bin (unknown line)
+__libc_start_main at /lib64/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 129041210554 (Pool: 129041208438; Big: 2116); GC: 76983

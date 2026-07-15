@@ -1,0 +1,25 @@
+-------------
+Decentralised, buildings pay 4956.531912220118
+Computation took 17.28202199935913s
+Required average of 10.0 iterations
+-------------
+Central MPC, buildings pay 4765.578422661352
+Computation took 2.0337159633636475s
+Required average of 1.0 iterations
+Central MPC, ADMM, buildings pay 4752.854733201886
+Computation took 49351.422230005264s
+Required average of 14985.520833333334 iterations
+-------------
+In private coalitions agents pay 4885.66610955449
+Computation took 3740.850685119629s
+Required average of 1361.7395833333333 iterations
+-------------
+
+====================================
+CPU Time used: 41:49:24
+CPU Percent: 183%
+Memory usage: 865392kb
+Approx Power usage: 0.5018
+Walltime usage: 24:00:15
+
+====================================

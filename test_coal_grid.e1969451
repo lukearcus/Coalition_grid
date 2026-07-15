@@ -1,0 +1,54 @@
+
+[42408] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/run_MPC.jl:20
+pthread_cond_wait at /lib64/libpthread.so.0 (unknown line)
+uv_cond_wait at /workspace/srcdir/libuv/src/unix/thread.c:822
+ijl_task_get_next at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/scheduler.c:584
+poptask at ./task.jl:1012
+wait at ./task.jl:1021
+task_done_hook at ./task.jl:694
+jfptr_task_done_hook_66597.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+jl_finish_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:319
+start_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:1213
+unknown function (ip: (nil))
+forall_exists_equal at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1754
+subtype at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1543
+subtype_tuple_tail at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1295 [inlined]
+subtype_tuple at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1374 [inlined]
+subtype at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1537
+subtype_unionall at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:965
+subtype at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1500
+exists_subtype at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1780 [inlined]
+forall_exists_subtype at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:1809
+ijl_subtype_env at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:2268
+jl_type_intersection_env_s at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/subtype.c:4569
+jl_f__compute_sparams at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/builtins.c:2043
+getindex at ./array.jl:397 [inlined]
+#163 at ./none:0
+iterate at ./generator.jl:48 [inlined]
+collect_to! at ./array.jl:849
+collect_to_with_first! at ./array.jl:827
+jfptr_collect_to_with_firstNOT._17290 at /rds/general/user/lbrickar/home/.julia/compiled/v1.11/SCS/uaibp_idYvJ.so (unknown line)
+collect at ./array.jl:801
+_reset_caches! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/matrix_of_constraints.jl:307
+MatrixOfConstraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/matrix_of_constraints.jl:104 [inlined]
+MatrixOfConstraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/matrix_of_constraints.jl:110
+GenericModel at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/model.jl:51
+default_cache at /rds/general/user/lbrickar/home/.julia/packages/SCS/FuXkU/src/MOI_wrapper/MOI_wrapper.jl:169
+#instantiate#40 at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/instantiate.jl:187
+instantiate at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/instantiate.jl:162
+#set_optimizer#104 at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:503
+set_optimizer at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:495 [inlined]
+#_#1 at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/JuMP.jl:204 [inlined]
+GenericModel at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/JuMP.jl:196 [inlined]
+ADMM_build_opt at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:141
+macro expansion at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:230 [inlined]
+#1470#threadsfor_fun#178 at ./threadingconstructs.jl:253
+#1470#threadsfor_fun at ./threadingconstructs.jl:220 [inlined]
+#1 at ./threadingconstructs.jl:154
+unknown function (ip: 0x1523fe3c410f)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+start_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:1202
+unknown function (ip: (nil))
+Allocations: 483957793 (Pool: 483955544; Big: 2249); GC: 254

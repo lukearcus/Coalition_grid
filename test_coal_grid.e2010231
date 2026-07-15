@@ -1,0 +1,12 @@
+GKS: cannot open display - headless operation mode active
+ERROR: LoadError: MethodError: no method matching plot_use(::Matrix{Float64})
+The function `plot_use` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  plot_use(!Matched::Vector{Vector{Float64}})
+   @ Main ~/code/Coalition_grid/plotting.jl:3
+
+Stacktrace:
+ [1] top-level scope
+   @ ~/code/Coalition_grid/run_MPC.jl:27
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/run_MPC.jl:27

@@ -1,0 +1,68 @@
+=>> PBS: job killed: walltime 259227 exceeded limit 259200
+
+[2970202] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/private_size.jl:30
+add_constraint at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Bridges/bridge_optimizer.jl:2047
+_copy_constraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/copy.jl:180
+_copy_constraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/copy.jl:192
+unknown function (ip: 0x151c1812b0e2)
+pass_nonvariable_constraints_fallback at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/copy.jl:203
+pass_nonvariable_constraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Bridges/bridge_optimizer.jl:438
+_pass_constraints at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/copy.jl:251
+default_copy_to at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/copy.jl:393
+copy_to at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Bridges/bridge_optimizer.jl:448 [inlined]
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/MathOptInterface.jl:121 [inlined]
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/MathOptInterface/Q3V1z/src/Utilities/cachingoptimizer.jl:370
+unknown function (ip: 0x151c18121ae2)
+#optimize!#105 at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:610
+optimize! at /rds/general/user/lbrickar/home/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:560 [inlined]
+ADMM_build_opt at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:184
+macro expansion at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:230 [inlined]
+#1470#threadsfor_fun#178 at ./threadingconstructs.jl:253
+#1470#threadsfor_fun at ./threadingconstructs.jl:220 [inlined]
+#1 at ./threadingconstructs.jl:154
+unknown function (ip: 0x151beeff2f7f)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+start_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:1202
+unknown function (ip: (nil))
+pthread_cond_wait at /lib64/libpthread.so.0 (unknown line)
+uv_cond_wait at /workspace/srcdir/libuv/src/unix/thread.c:822
+ijl_task_get_next at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/scheduler.c:584
+poptask at ./task.jl:1012
+wait at ./task.jl:1021
+#wait#733 at ./condition.jl:130
+wait at ./condition.jl:125 [inlined]
+_wait at ./task.jl:328
+threading_run at ./threadingconstructs.jl:168
+macro expansion at ./threadingconstructs.jl:190 [inlined]
+single_optimise_ADMM at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:229
+#231 at ./none:0
+unknown function (ip: 0x151beefdcf22)
+iterate at ./generator.jl:48 [inlined]
+collect_to! at ./array.jl:849
+collect_to_with_first! at ./array.jl:827
+unknown function (ip: 0x151beefffc95)
+collect at ./array.jl:801
+privacy_focussed_coals at /rds/general/user/lbrickar/home/code/Coalition_grid/Coalition.jl:277
+coal_MPC at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:338
+coal_MPC at /rds/general/user/lbrickar/home/code/Coalition_grid/MPC_optimiser.jl:332 [inlined]
+top-level scope at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/private_size.jl:33
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:934
+jl_toplevel_eval_flex at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:886
+ijl_toplevel_eval_in at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/toplevel.c:994
+eval at ./boot.jl:430 [inlined]
+include_string at ./loading.jl:2734
+_include at ./loading.jl:2794
+include at ./Base.jl:562
+jfptr_include_46943.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+exec_options at ./client.jl:323
+_start at ./client.jl:531
+jfptr__start_73597.1 at /rds/easybuild/rome/apps/software/Julia/1.11.6-linux-x86_64/lib/julia/sys.so (unknown line)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+true_main at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:900
+jl_repl_entrypoint at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/jlapi.c:1059
+main at julia.bin (unknown line)
+__libc_start_main at /lib64/libc.so.6 (unknown line)
+unknown function (ip: 0x4010b8)
+unknown function (ip: (nil))
+Allocations: 770840185420 (Pool: 770840183067; Big: 2353); GC: 386498

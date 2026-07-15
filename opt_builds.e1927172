@@ -1,0 +1,53 @@
+
+[530887] signal 15: Terminated
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/opt_builds.jl:19
+getindex at ./essentials.jl:917 [inlined]
+peekbyte at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/utils.jl:339 [inlined]
+parsefrac at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/floats.jl:361
+parsedigits at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/floats.jl:323
+parsedigits at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/floats.jl:229 [inlined]
+typeparser at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/floats.jl:197
+#26 at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:375 [inlined]
+checkforsentinel at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:239 [inlined]
+stripwhitespace at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:86
+findquoted at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:216
+stripwhitespace at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:86
+_finddelimiter at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:362 [inlined]
+checkemptysentinel at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:38 [inlined]
+#9 at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:12 [inlined]
+_xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:407 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:418 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+parsevalue! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:782
+parserow at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:628 [inlined]
+parsefilechunk! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:556
+unknown function (ip: 0x14ddb903c6b7)
+multithreadparse at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:366
+#34 at /rds/general/user/lbrickar/home/.julia/packages/WorkerUtilities/ey0fP/src/WorkerUtilities.jl:384
+unknown function (ip: 0x14ddb90457ff)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+start_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:1202
+unknown function (ip: (nil))
+finddelimiter at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:262
+_finddelimiter at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:367 [inlined]
+checkemptysentinel at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:38 [inlined]
+#9 at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/components.jl:12 [inlined]
+_xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:407 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:418 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+xparse at /rds/general/user/lbrickar/home/.julia/packages/Parsers/6Nt9C/src/Parsers.jl:412 [inlined]
+parsevalue! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:782
+parserow at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:628 [inlined]
+parsefilechunk! at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:556
+unknown function (ip: 0x14ddb903c6b7)
+multithreadparse at /rds/general/user/lbrickar/home/.julia/packages/CSV/LiiJM/src/file.jl:366
+#34 at /rds/general/user/lbrickar/home/.julia/packages/WorkerUtilities/ey0fP/src/WorkerUtilities.jl:384
+unknown function (ip: 0x14ddb90457ff)
+jl_apply at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/julia.h:2157 [inlined]
+start_task at /cache/build/tester-amdci4-12/julialang/julia-release-1-dot-11/src/task.c:1202
+unknown function (ip: (nil))
+Allocations: 52182280 (Pool: 52181699; Big: 581); GC: 82
+
+[530887] signal 11 (1): Segmentation fault
+in expression starting at /rds/general/user/lbrickar/home/code/Coalition_grid/experiments/opt_builds.jl:19
