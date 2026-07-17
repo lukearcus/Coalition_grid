@@ -21,8 +21,10 @@ num_ahead = 8
 all_buildings, energy_cost, energy_sale = MPC_load_from_CSV(num_builds, num_steps)
 opt = MPC_optimiser(energy_cost', energy_sale')
 
-# Test delta_G values from 0.01 to 1000 in increments of about 100 (10 values total) 
-delta_G_values = range(0.01, 500, length=100)
+# Log-spaced sweep from 0.01 to 1000: spans greedy (small delta_G) -> softmax
+# (delta_G ~ 8-80) -> near-uniform (large delta_G). 30 points covers the
+# discriminative window without wasting samples in the flat high end.
+delta_G_values = 10 .^ range(-2, 3, length=30)
 num_repeats = 10
 
 # Initialize results DataFrame

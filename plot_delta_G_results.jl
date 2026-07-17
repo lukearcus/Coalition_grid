@@ -17,17 +17,19 @@ sort!(grouped, :delta_G)
 plt = plot(grouped.delta_G, grouped.mean_cost, 
     yerror=grouped.std_cost,
     seriestype=:scatter,
-    xlabel="delta_G",
+    xlabel="delta_G (log scale)",
     ylabel="Average Cost",
     title="Cost vs delta_G in Private Coalition Formation",
     markersize=6,
+    xscale=:log10,
     legend=false)
 
 # Add a line connecting the points
 plot!(grouped.delta_G, grouped.mean_cost, 
     seriestype=:line,
     linewidth=2,
-    color=:blue)
+    color=:blue,
+    xscale=:log10)
 
 # Save the plot
 savefig(plt, "results/delta_G_cost_plot.pdf")

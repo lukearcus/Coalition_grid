@@ -394,17 +394,12 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             break
         end
         epsilon = 1e-0
-        # Add numerical stability to prevent overflow in exp()
-        coal_weights = Dict{Any, Float64}()
-        for i in keys(poss_coal_vals)
-            # Safe weight calculation with bounds checking
-            weight_val = epsilon*poss_coal_vals[i]/(2*delta_u)
-            # Clip extreme values to prevent overflow
-            capped_weight = min(weight_val, 50.0)  # Prevent overflow in exp()
-            coal_weights[i] = exp(capped_weight)
-        end
-        ks = collect(keys(coal_weights))
-        weights = [coal_weights[k] for k in ks]
+        ks = collect(keys(poss_coal_vals))
+        wv = [epsilon*poss_coal_vals[i]/(2*delta_u) for i in ks]
+        # Numerically stable softmax: subtract max before exp() to prevent
+        # overflow without flattening large weights into a uniform distribution.
+        mw = isempty(wv) ? 0.0 : maximum(wv)
+        weights = [exp(w - mw) for w in wv]
         # Ensure weights are finite and valid
         weights = [isfinite(w) ? w : 1.0 for w in weights]
         n_pool = length(ks)
