@@ -393,7 +393,7 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             new_agents = agents
             break
         end
-        epsilon = 1e-1
+        epsilon = 1e-0
         # Add numerical stability to prevent overflow in exp()
         coal_weights = Dict{Any, Float64}()
         for i in keys(poss_coal_vals)
