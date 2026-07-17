@@ -443,6 +443,7 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                 end
             catch e
                 # In case of weight problems, fall back to uniform sampling
+                println(e)
                 if length(ks) > 0
                     # If we're in this catch block, there might be issues with weights
                     # Fall back to choosing a random pair
@@ -528,5 +529,5 @@ end
 
 function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
     # Wrapper for backward compatibility with existing code
-    return privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_ahead, receding_horizon, 100.0)
+    return privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_look_ahead, receding_horizon, 100.0)
 end
