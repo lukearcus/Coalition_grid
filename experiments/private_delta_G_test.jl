@@ -38,6 +38,12 @@ for (delta_G_idx, delta_G) in enumerate(delta_G_values)
             Random.seed!(repeat + delta_G_idx * 1000)
             
             buildings = all_buildings[1:num_builds]
+            # Reset battery state: coal_MPC mutates b.SoC[k+1] in place, so reusing
+            # buildings across repeats leaks the previous repeat's terminal SoC
+            # and corrupts the next repeat's MPC trajectory. See AGENTS.md.
+            for b in buildings
+                fill!(b.SoC, 0.0)
+            end
             t1 = time()
             
             # Use the modified function with delta_G parameter
