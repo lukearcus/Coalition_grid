@@ -1,0 +1,18 @@
+# Normalize line endings to LF in the repo. Working-tree line endings on
+# Windows mounts (WSL /mnt/c) may be CRLF, but git compares against the
+# normalized LF index, so diffs stay clean.
+* text=auto eol=lf
+
+# Julia source
+*.jl text eol=lf
+
+# Data and text results
+*.csv text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+
+# Binary assets (never normalize)
+*.pdf binary
+*.png binary
+*.svg binary
