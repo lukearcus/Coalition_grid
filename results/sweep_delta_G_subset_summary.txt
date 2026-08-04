@@ -1,0 +1,16 @@
+sweep_delta_G_subset summary
+subset_ids = [62, 28, 70, 37, 18, 40]
+num_repeats = 1
+delta_G_values = [0.0, 0.010000000000000002, 1000.0]
+windows = [("day37_best", 3553, 0.254)]
+dec_avg = Dict("day37_best" => -6980.086765041597)
+
+=== Window day37_best (dens=0.254, dec_avg=-6980.086765041597) ===
+3×11 DataFrame
+ Row │ delta_G  mean_cost  std_cost  min_cost  max_cost  mean_benefit  std_benefit  n_A_none  n_B_local  n_C_global  n_runs
+     │ Any      Float64    Float64   Float64   Float64   Float64       Float64      Int64     Int64      Int64       Int64
+─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ 0.0       -7137.05       NaN  -7137.05  -7137.05     156.965            NaN         0          1           0       1
+   2 │ 0.01      -7136.9        NaN  -7136.9   -7136.9      156.814            NaN         0          1           0       1
+   3 │ 1000.0    -6986.3        NaN  -6986.3   -6986.3        6.20827          NaN         1          0           0       1
+

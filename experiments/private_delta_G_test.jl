@@ -24,8 +24,8 @@ opt = MPC_optimiser(energy_cost', energy_sale')
 # Log-spaced sweep from 0.01 to 1000: spans greedy (small delta_G) -> softmax
 # (delta_G ~ 8-80) -> near-uniform (large delta_G). 30 points covers the
 # discriminative window without wasting samples in the flat high end.
-delta_G_values = 10 .^ range(-2, 3, length=30)
-num_repeats = 10
+delta_G_values = 10 .^ range(-2, 3, length=5)
+num_repeats = 3
 
 # Initialize results DataFrame
 data = DataFrame(delta_G=[], repeat=[], average_cost=[], num_iters=[], time=[])

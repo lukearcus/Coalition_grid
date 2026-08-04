@@ -341,7 +341,10 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         vars = [out[1] for out in outs]
         if first_round
             # dec_single_vals[i] = standalone first-step cost for building i
-            dec_single_vals = [value(outs[i][1][2][1])*energy_cost_k(opt,k,1) - value(outs[i][1][3][1])*energy_sale_k(opt,k,1) for i in 1:length(buildings)]
+            # P3.4: NaN-guard — SCS may return NaN on non-convergence; treat as 0.0
+            # so it doesn't poison the split-check comparison downstream.
+            sv(v) = (x = value(v); isnan(x) ? 0.0 : x)
+            dec_single_vals = [sv(outs[i][1][2][1])*energy_cost_k(opt,k,1) - sv(outs[i][1][3][1])*energy_sale_k(opt,k,1) for i in 1:length(buildings)]
             first_round = false
         end
         num_iters += sum([out[2] for out in outs])
@@ -352,7 +355,10 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             if agent isa Int && haskey(singleton_cache, agent)
                 cons_vec[agent] = singleton_cache[agent][2]
             else
-                cons_vec[agent] = vec(sum(value(var[2]-var[3]), dims=2))
+                # P3.4: NaN-guard — replace NaN from non-converged SCS with 0.0 so a
+                # bad coalition solve doesn't poison the next round's poss_coal_vals/softmax.
+                cv = vec(sum(value(var[2]-var[3]), dims=2))
+                cons_vec[agent] = [isnan(x) ? 0.0 : x for x in cv]
             end
         end
 
@@ -486,7 +492,12 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         if length(agent) > 1
             dec_val = sum(sum(dec_single_vals[i] for i in agent))
             coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
-            if dec_val >= coal_single_val
+            # P3.4: NaN-guard — if SCS didn't converge on this step, keep the coalition
+            # (it was selected on the horizon-wide upper bound; don't discard on a
+            # single non-converged step-k cost). NaN >= x is always false, so without
+            # this guard NaN-polluted coalitions are silently always split.
+            keep = isnan(dec_val) || isnan(coal_single_val) || dec_val >= coal_single_val
+            if keep
                 push!(new_agents, agent)
                 added = true
             else
