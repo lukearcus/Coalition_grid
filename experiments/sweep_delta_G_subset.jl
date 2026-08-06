@@ -74,7 +74,7 @@ const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "20"))
 # The critical transition for this subset was 0.1..10 in the quick diagnostic,
 # which gets ~9 points under the default 20-point log spacing.
 # (length>=2 required by range(); the script guards against length=1.)
-const delta_G_values = [0.0; 10 .^ range(-2, 3; length=max(delta_g_points, 2))]
+const delta_G_values = [0.0; 10 .^ range(-1, 0; length=max(delta_g_points, 2))]
 
 # Windows: (name, start_row, opp_density). day d starts at row d*96+1.
 # Default = day 37 only (best). Add more to study complementarity's effect on
