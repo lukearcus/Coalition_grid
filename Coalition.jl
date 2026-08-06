@@ -416,7 +416,11 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         # alias table) and eliminates the O(|coaled|) membership check.
         while n_pool > 0
             try
-                ind = sample(1:n_pool, Weights(weights[1:n_pool]))
+                # delta_G=0 -> argmax (deterministic; avoids sample() rounding noise
+                # from SCS-inflated weights at delta_u=1e-10). delta_G>0 -> softmax
+                # sample. argmax still depends on SCS noise in poss_coal_vals but
+                # is reproducible per machine (no alias-table RNG consumed).
+                ind = delta_G <= 0.0 ? argmax(weights[1:n_pool]) : sample(1:n_pool, Weights(weights[1:n_pool]))
                 elem = ks[ind]
                 # Remove the drawn pair (swap-with-last, O(1))
                 weights[ind] = weights[n_pool]
