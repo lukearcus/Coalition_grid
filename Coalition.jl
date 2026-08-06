@@ -503,11 +503,15 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     end
     num_problems = 0
     new_agents = Vector()
-    added = false
+    # P3.6: Track whether ANY coalition was split (not just the last one).
+    # The old `added` flag was reset every iteration, so `if added` at the end
+    # only reflected the LAST coalition's keep/split decision -- meaning splits
+    # were silently discarded whenever the last coalition was kept. This
+    # caused the split check to be applied unreliably (position-dependent).
+    any_split = false
     # P1.3: Map each current agent to its var, so we can reuse results for kept coalitions
     vars_by_agent = Dict{Any, Any}(zip(agents, vars))
     for (agent, var) in zip(agents,vars)
-        added = false
         if length(agent) > 1
             dec_val = sum(sum(dec_single_vals[i] for i in agent))
             coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
@@ -518,17 +522,17 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             keep = isnan(dec_val) || isnan(coal_single_val) || dec_val >= coal_single_val
             if keep
                 push!(new_agents, agent)
-                added = true
             else
                 for i in agent
                     push!(new_agents, i)
                 end
+                any_split = true
             end
         else
             push!(new_agents,agent)
         end
     end
-    if added
+    if any_split
         agents = new_agents
     end
     # P1.3: Reuse cached/reused vars where possible; only solve genuinely new singletons (from splits)
