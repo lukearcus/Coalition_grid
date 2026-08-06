@@ -7,6 +7,11 @@ using Base.Threads
 agent_ids(a::Int) = [a]
 agent_ids(a::Vector) = a
 
+# DIAGNOSTIC: global log for coalition pick instrumentation. Each entry:
+# (k, round, picked_ids, picked_val, argmax_ids, argmax_val, is_argmax, delta_G)
+# Cleared by the caller before each run; read after to analyse picks.
+global PICK_LOG = Tuple{Int,Int,Vector{Int},Float64,Vector{Int},Float64,Bool,Float64}[]
+
 
 function find_opt_coal(buildings::Vector{Building}, max_coal_size::Int)
     possible_coals = collect(partitions(buildings))
@@ -307,9 +312,11 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     singleton_cache = Dict{Int, Tuple{Any, Vector{Float64}}}()
     cache_lock = SpinLock()
     first_round = true
+    round_num = 0
     # dec_outs_single = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon)[1] for agent in agents]
     # dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in dec_outs_single]
     while !done
+        round_num += 1
         done = true
         # P1.2 + P1.5: Cache singleton solves across rounds; parallelise across agents.
         outs = Vector{Any}(undef, length(agents))
@@ -422,6 +429,14 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                 # is reproducible per machine (no alias-table RNG consumed).
                 ind = delta_G <= 0.0 ? argmax(weights[1:n_pool]) : sample(1:n_pool, Weights(weights[1:n_pool]))
                 elem = ks[ind]
+                # DIAGNOSTIC: log the pick vs argmax (before removal shuffles the pool).
+                # picked_ids/argmax_ids are the flat building-id lists of each pair.
+                am_ind = argmax(weights[1:n_pool])
+                pk_ids = sort(vcat(agent_ids(elem[1]), agent_ids(elem[2])))
+                am_ids = sort(vcat(agent_ids(ks[am_ind][1]), agent_ids(ks[am_ind][2])))
+                push!(PICK_LOG, (k, round_num, pk_ids, poss_coal_vals[elem],
+                                 am_ids, poss_coal_vals[ks[am_ind]],
+                                 ind == am_ind, delta_G))
                 # Remove the drawn pair (swap-with-last, O(1))
                 weights[ind] = weights[n_pool]
                 ks[ind] = ks[n_pool]

@@ -81,6 +81,11 @@ function single_optimise(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_
 	num_steps = min(length(pred_consumption(bs[1],k)),num_steps)
 	num_steps = max(num_steps, 1)
 	set_silent(model)
+	# P3.5: Tighten SCS tolerance from 1e-2 to 1e-4 for cross-machine
+	# reproducibility of poss_coal_vals (the 1e-2 tolerance let near-tied
+	# pair values flip argmax between machines).
+	set_optimizer_attribute(model, "eps_abs", 1e-4)
+	set_optimizer_attribute(model, "eps_rel", 1e-4)
 	
 	max_flow_val = repeat(hcat([max_flow(b) for b in bs])', num_steps, 1)
 	@variable(model, 0<=pos_delta_s[t=1:num_steps, b=1:num_builds]<=max_flow_val[t,b])
@@ -224,8 +229,9 @@ function ADMM_build_opt_init(b::MPC_Building, k::Int, num_steps::Int)
 	set_silent(model)
 	# P3.2: Relax SCS tolerance — the outer ADMM already converges to 1e-5,
 	# so each per-iteration SCS solve doesn't need to be tight. Cuts SCS iters ~3x.
-	set_optimizer_attribute(model, "eps_abs", 1e-2)
-	set_optimizer_attribute(model, "eps_rel", 1e-2)
+	# P3.5: Tightened from 1e-2 to 1e-4 for cross-machine reproducibility.
+	set_optimizer_attribute(model, "eps_abs", 1e-4)
+	set_optimizer_attribute(model, "eps_rel", 1e-4)
 
 	max_flow_val = ones(num_steps).*max_flow(b)
 	@variable(model, 0<=pos_delta_s[t=1:num_steps]<=max_flow_val[t])
@@ -292,8 +298,9 @@ function ADMM_coal_update_init(num_builds::Int, num_steps::Int)
 	model = Model(SCS.Optimizer)
 	set_silent(model)
 	# P3.2: Relax SCS tolerance (matches the per-building subproblem)
-	set_optimizer_attribute(model, "eps_abs", 1e-2)
-	set_optimizer_attribute(model, "eps_rel", 1e-2)
+	# P3.5: Tightened from 1e-2 to 1e-4 for cross-machine reproducibility.
+	set_optimizer_attribute(model, "eps_abs", 1e-4)
+	set_optimizer_attribute(model, "eps_rel", 1e-4)
 	@variable(model, coal_exch[1:num_steps,1:num_builds])
 	@constraint(model, coal_c, coal_exch*ones(num_builds).==0)
 	# Parameters for lambda and proposed_coals
