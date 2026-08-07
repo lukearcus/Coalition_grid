@@ -350,13 +350,13 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	# P3.1: Build per-building and coal-update models ONCE; reuse across ADMM iterations.
 	build_caches = [ADMM_build_opt_init(b, k, num_steps) for b in bs]
 	coal_cache = ADMM_coal_update_init(num_builds, num_steps)
-	# P3.3: Max-iteration cap so a non-converging coalition can't blow up the whole run.
-	# Convergence check uses a relative residual scaled to the SCS tolerance (1e-2),
-	# so the outer ADMM stops when SCS solve noise dominates further progress.
+	# P3.7: Restored absolute tolerance 1e-5 (matching the original code that gave
+	# the 489 benefit). The relative 1e-4 was ~100000x looser for large-magnitude
+	# coalitions, giving less-converged solutions and different split-check outcomes.
 	max_admm_iters = 1000
-	rel_tol = 1e-4
+	abs_tol = 1e-5
 	let states = Vector{Any}(undef,num_builds)
-		while (norm(reduce(hcat, proposed_coal).-new_coal) / (norm(reduce(hcat, proposed_coal)) + 1e-10) > rel_tol) | (num_iters_admm <= 1)
+		while (norm(reduce(hcat, proposed_coal).-new_coal) > abs_tol) | (num_iters_admm <= 1)
 			if num_iters_admm > max_admm_iters
 				break
 			end

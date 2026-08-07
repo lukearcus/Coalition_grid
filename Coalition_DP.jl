@@ -1,4 +1,4 @@
-include("MPC_optimiser.jl")
+include("MPC_optimiser_fast.jl")
 using Combinatorics
 using StatsBase
 using Base.Threads

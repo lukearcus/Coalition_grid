@@ -22,13 +22,13 @@ opt = MPC_optimiser(energy_cost', energy_sale')
 use_data = [b.act_cons-b.act_prod for b in buildings]
 # plot_use(use_data, timestamps)
 
-res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
+#res, vars, num_iters = coal_MPC(privacy_focussed_coals,buildings,max_coal_size,num_look_ahead)
 delta_G=0.0
 
 # res, _, num_iters = coal_MPC((buildings2, mcs, k, na, rh) ->
 #                     privacy_focussed_coals_with_delta(buildings2, mcs, k, na, rh, delta_G),
 #                     buildings, max_coal_size, num_look_ahead)
-println("In private coalitions agents pay ", res)
+#println("In private coalitions agents pay ", res)
 
 # use_data = vars[1]-vars[2]
 # use_data = [use_data[:,i] for i in 1:size(use_data,2)]
