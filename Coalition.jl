@@ -501,51 +501,22 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         #println(sorted_coal_vals)
         #update cons_vec
     end
-    num_problems = 0
-    new_agents = Vector()
-    # P3.6: Track whether ANY coalition was split (not just the last one).
-    # The old `added` flag was reset every iteration, so `if added` at the end
-    # only reflected the LAST coalition's keep/split decision -- meaning splits
-    # were silently discarded whenever the last coalition was kept. This
-    # caused the split check to be applied unreliably (position-dependent).
-    any_split = false
-    # P1.3: Map each current agent to its var, so we can reuse results for kept coalitions
+    # P3.8: Removed the myopic split check. It negated DP guarantees by setting
+    # coalitions to zero probability in a data-dependent way (dec_val and
+    # coal_single_val both depend on the data, so the keep/split decision is
+    # not covered by the post-processing theorem). Coalitions formed by the
+    # exponential mechanism are now kept as-is. The UB (poss_coal_vals) is
+    # still the utility, so bad coalitions get low sampling probability
+    # naturally.
+    # P1.3: Reuse existing vars (no splits to re-solve).
     vars_by_agent = Dict{Any, Any}(zip(agents, vars))
-    for (agent, var) in zip(agents,vars)
-        if length(agent) > 1
-            dec_val = sum(sum(dec_single_vals[i] for i in agent))
-            coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
-            # P3.4: NaN-guard — if SCS didn't converge on this step, keep the coalition
-            # (it was selected on the horizon-wide upper bound; don't discard on a
-            # single non-converged step-k cost). NaN >= x is always false, so without
-            # this guard NaN-polluted coalitions are silently always split.
-            keep = isnan(dec_val) || isnan(coal_single_val) || dec_val >= coal_single_val
-            if keep
-                push!(new_agents, agent)
-            else
-                for i in agent
-                    push!(new_agents, i)
-                end
-                any_split = true
-            end
-        else
-            push!(new_agents,agent)
-        end
-    end
-    if any_split
-        agents = new_agents
-    end
-    # P1.3: Reuse cached/reused vars where possible; only solve genuinely new singletons (from splits)
     vars = Vector{Any}(undef, length(agents))
     for (i, agent) in enumerate(agents)
         if haskey(vars_by_agent, agent)
-            # Kept coalition or unchanged singleton: reuse existing result
             vars[i] = vars_by_agent[agent]
         elseif agent isa Int && haskey(singleton_cache, agent)
-            # Singleton split out of a coalition but we already solved it standalone earlier
             vars[i] = singleton_cache[agent][1]
         else
-            # Genuinely new singleton from a split — solve now and cache
             res = single_optimise_ADMM(opt, buildings[agent], k, num_look_ahead, receding_horizon)
             num_iters += res[2]
             cv = vec(sum(value(res[1][2]-res[1][3]), dims=2))
