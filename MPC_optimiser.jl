@@ -526,7 +526,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 						b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
 					end
 					# println(b.SoC)
-					remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,i]+res[1][1,i])
+					remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
 					isnan(remaining) && (remaining = 0.0)
 					if remaining > 0
 						sell[k,b.id] = remaining
@@ -541,7 +541,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 					next_soc = value(res[4][2,1])
 					b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
 				end
-				remaining = b.act_prod[k]-b.act_cons[k]-value(res[6][1,1]+res[1][1,1])
+				remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,1]) + value(res[1][1,1]))
 				isnan(remaining) && (remaining = 0.0)
 				if remaining > 0
 					sell[k,b.id] = remaining
