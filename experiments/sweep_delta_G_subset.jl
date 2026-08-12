@@ -59,6 +59,7 @@ include("../load_EMS_data.jl")
 # each ~42-44% producer) + 3 net consumers (b37/b18/b40, ~1-3% producer, ~0.1 MW).
 # Opp-density 0.202 mean / 0.254 peak across 49 days (vs 0.102 for buildings 1-10).
 const SUBSET_IDS = [62, 28, 70, 37, 18, 40]
+const SUBSET_IDS = [1,2,3,4,5,6,7,8,9,10]
 const num_builds = length(SUBSET_IDS)
 const max_coal_size = 6
 const num_ahead = 8
@@ -66,8 +67,8 @@ const receding_horizon = false
 const N_STEPS = 96
 
 # ENV overrides with sensible defaults.
-const num_repeats    = parse(Int, get(ENV, "NUM_REPEATS", "20"))
-const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "20"))
+const num_repeats    = parse(Int, get(ENV, "NUM_REPEATS", "10"))
+const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "10"))
 
 # delta_G grid: 0.0 (deterministic argmax anchor) + log-spaced 0.01..1000.
 # 0.01..1000 spans greedy (small) -> softmax (~1-10) -> near-uniform (large).
