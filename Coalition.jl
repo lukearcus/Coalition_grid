@@ -10,6 +10,11 @@ agent_ids(a::Vector) = a
 # DIAGNOSTIC: global log for coalition pick instrumentation. Each entry:
 # (k, round, picked_ids, picked_val, argmax_ids, argmax_val, is_argmax, delta_G)
 # Cleared by the caller before each run; read after to analyse picks.
+# SECURITY: the log records the full sampling transcript (which pairs were
+# considered and their utilities) — it MUST NOT be exposed in a deployment
+# where the DP guarantee on the coalition structure is relied upon. Gate the
+# push! with LOG_PICKS so the transcript is only recorded when debugging.
+const LOG_PICKS = false
 global PICK_LOG = Tuple{Int,Int,Vector{Int},Float64,Vector{Int},Float64,Bool,Float64}[]
 
 
@@ -307,14 +312,10 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     delta_u = max(delta_G * max_price_diff, 1e-10)
     num_iters=0
     vars = 0
-    dec_single_vals = 0
     # P1.2: Cache singleton results: building_id => (vars, cons_vec)
     singleton_cache = Dict{Int, Tuple{Any, Vector{Float64}}}()
     cache_lock = SpinLock()
-    first_round = true
     round_num = 0
-    # dec_outs_single = [single_optimise_ADMM(opt, buildings[agent], k,num_look_ahead,receding_horizon)[1] for agent in agents]
-    # dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in dec_outs_single]
     while !done
         round_num += 1
         done = true
@@ -346,14 +347,6 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             end
         end
         vars = [out[1] for out in outs]
-        if first_round
-            # dec_single_vals[i] = standalone first-step cost for building i
-            # P3.4: NaN-guard — SCS may return NaN on non-convergence; treat as 0.0
-            # so it doesn't poison the split-check comparison downstream.
-            sv(v) = (x = value(v); isnan(x) ? 0.0 : x)
-            dec_single_vals = [sv(outs[i][1][2][1])*energy_cost_k(opt,k,1) - sv(outs[i][1][3][1])*energy_sale_k(opt,k,1) for i in 1:length(buildings)]
-            first_round = false
-        end
         num_iters += sum([out[2] for out in outs])
         #res = [out[1] for out in outs]
 
@@ -390,22 +383,21 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         end
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
+        # DP: every pair enters the pool unconditionally. pair_val_mat[i,j] is
+        # already 0 for incompatible pairs (the opp.*m term vanishes), so they
+        # get value 0 and a correspondingly small (but positive) softmax weight
+        # and remain samplable. Filtering them out would leak the compatibility
+        # structure of the data through the sampler's candidate set.
         for c in poss_coals
             i = findfirst(==(c[1]), agents)
             j = findfirst(==(c[2]), agents)
-            if any_compat[i, j]
-                poss_coal_vals[c] = pair_val_mat[i, j]
-            end
+            poss_coal_vals[c] = pair_val_mat[i, j]
         end
         # sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         #
         new_agents = Vector()
         # P2.1: Track whether any merge was actually accepted this round; if not, exit.
         merge_happened = false
-        if length(poss_coal_vals) == 0
-            new_agents = agents
-            break
-        end
         epsilon = 1e-0
         ks = collect(keys(poss_coal_vals))
         wv = [epsilon*poss_coal_vals[i]/(2*delta_u) for i in ks]
@@ -431,12 +423,14 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                 elem = ks[ind]
                 # DIAGNOSTIC: log the pick vs argmax (before removal shuffles the pool).
                 # picked_ids/argmax_ids are the flat building-id lists of each pair.
-                am_ind = argmax(weights[1:n_pool])
-                pk_ids = sort(vcat(agent_ids(elem[1]), agent_ids(elem[2])))
-                am_ids = sort(vcat(agent_ids(ks[am_ind][1]), agent_ids(ks[am_ind][2])))
-                push!(PICK_LOG, (k, round_num, pk_ids, poss_coal_vals[elem],
-                                 am_ids, poss_coal_vals[ks[am_ind]],
-                                 ind == am_ind, delta_G))
+                if LOG_PICKS
+                    am_ind = argmax(weights[1:n_pool])
+                    pk_ids = sort(vcat(agent_ids(elem[1]), agent_ids(elem[2])))
+                    am_ids = sort(vcat(agent_ids(ks[am_ind][1]), agent_ids(ks[am_ind][2])))
+                    push!(PICK_LOG, (k, round_num, pk_ids, poss_coal_vals[elem],
+                                     am_ids, poss_coal_vals[ks[am_ind]],
+                                     ind == am_ind, delta_G))
+                end
                 # Remove the drawn pair (swap-with-last, O(1))
                 weights[ind] = weights[n_pool]
                 ks[ind] = ks[n_pool]
