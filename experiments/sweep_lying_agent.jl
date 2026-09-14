@@ -182,7 +182,7 @@ for (wname, s, dens) in WINDOWS
                     t1 = time()
 
                     res, trades, num_iters = coal_MPC((buildings, mcs, k, na, rh) ->
-                        privacy_focused_coals_with_delta(buildings, mcs, k, na, rh, delta_G),
+                        privacy_focussed_coals_with_delta(buildings, mcs, k, na, rh, delta_G),
                         bwin, max_coal_size, num_ahead)
 
                     t2 = time()
