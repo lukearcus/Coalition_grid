@@ -68,24 +68,31 @@ function plot_var_builds()
 end
 
 function plot_var_size()
-        # filenames = ["results/bottom_var_num_builds.csv","results/central_ADMM_var_num_builds.csv","results/central_nonADMM_var_num_builds.csv","results/decentralised_var_num_builds.csv","results/private_var_num_builds_unguaranteed.csv"]
+    # filenames = ["results/bottom_var_num_builds.csv","results/central_ADMM_var_num_builds.csv","results/central_nonADMM_var_num_builds.csv","results/decentralised_var_num_builds.csv","results/private_var_size"]
     filename = "results/private_var_size"
     # labels = ["Bottom-Up","Centralised","Limited Information"]
     scalefontsizes()
     default(fontfamily="Computer Modern",
-        linewidth=2, framestyle=:box, label=nothing, grid=false)
+        linewidth=2, label=nothing, grid=false)
     scalefontsizes(1.4)
     # plot()
     file = CSV.read(filename, DataFrame, delim=",")
-    plot()
-    plot(file[!,"max_size"],file[!,"average_cost"],yaxis="Average cost",label="cost")
-    plot!(twinx(),file[!,"num_iters"],yaxis="Iterations per time step", color=:red, label="Iterations")
-
     
-    # xlabel!("Number of buildings")
-    # ylabel!("Iterations per timestep")
+    # Create primary plot with average cost
+    p1 = plot(file[!,"max_size"], file[!,"average_cost"], 
+              label="Average Cost", color=:blue, linewidth=2)
+    xlabel!("Maximum Coalition Size")
+    plot!(file[!,"max_size"], NaN.*(1:10), label = "Iterations", linecolor=:red, grid=false, legend=:top) 
+    # Create secondary y-axis for iterations using twinx
+    p2 = twinx()
+    plot!(p2, file[!,"max_size"], file[!,"num_iters"], color=:red, linewidth=2)
     
-    # title!("Number of ADMM Iterations vs Number of Buildings")
+    # Set labels for both axes properly
+    # yticks!(p1, yticks(p1)...)
+    ylabel!(p1, "Average Cost")
+    ylabel!(p2, "Iterations per Time Step")
+    
+    # title!("Average Cost and Iterations vs Maximum Coalition Size")
     savefig(string("results/","var_size.pdf"))   
 end
 

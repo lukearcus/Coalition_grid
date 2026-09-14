@@ -19,8 +19,13 @@ df0   = filter(:delta_G => x -> x == 0.0, df)
 dg0   = combine(df0,
                :average_cost   => mean => :mean_cost,
                :average_cost   => std  => :std_cost,
+               :benefit_vs_dec => mean => :mean_benefit,
                :time           => mean => :mean_time,
                :num_iters      => mean => :mean_iters)
+# Compute the decentralized baseline cost from delta_G=0 data
+# benefit_vs_dec = cost_decentralized - cost_coalition
+# So: cost_decentralized = cost_coalition + benefit_vs_dec
+decentralized_cost = dg0[1, :mean_cost] + dg0[1, :mean_benefit]  # benefit_vs_dec is in the same row
 # Cosmetic x-position for the anchor: half a decade below the smallest nonzero delta_G
 x_anchor = 10^(log10(minimum(df_log[:, :delta_G])) - 0.5)
 
@@ -43,10 +48,10 @@ end
 
 # Shared styling: scatter raw, mean line, ±1 std ribbon, linear trend (in log-x),
 # plus a delta_G=0 deterministic anchor at a cosmetic x-position.
-function sweep_plot(df_log, gdf, dg0, x_anchor, col, sfx, ylabel, title)
+function sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, col, sfx, ylabel, title)
     p = plot(df_log[:, :delta_G], df_log[:, col],
              seriestype=:scatter, xscale=:log10,
-             xlabel=raw"epsilon ⋅ delta_G", ylabel=ylabel,
+             xlabel=raw"delta_G/epsilon", ylabel=ylabel,
              title=title, legend=:topright, label="raw",
              markershape=:circle, markeralpha=0.35, ms=3)
     mean_sym = Symbol("mean_", sfx)
@@ -70,16 +75,27 @@ function sweep_plot(df_log, gdf, dg0, x_anchor, col, sfx, ylabel, title)
     plot!(p, [x_anchor], [dg0[1, mean_sym]],
           seriestype=:scatter, markershape=:star5, ms=8, color=:black,
           label="δ_G=0 (det)")
+
     return p
 end
 
-p1 = sweep_plot(df_log, gdf, dg0, x_anchor, :average_cost, "cost",  "Average Cost",         "Average Cost vs delta_G")
-# Plot 2: std of cost across repeats at each delta_G, with log-x linear trend + anchor (std=0 by construction)
+p1 = sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, :average_cost, "cost",  "Average Cost",         "Average Cost vs delta_G")
+ # Horizontal line at decentralized cost
+# plot!(p1, [minimum(xs), maximum(xs)], [decentralized_cost, decentralized_cost],
+#           seriestype=:line, color=:blue, linestyle=:dash, linewidth=2,
+#           label="decentralized")
+# Horizontal line at decentralized cost
+xs_cost  = gdf[:, :delta_G]
+std_cost = gdf[:, :std_cost]
+plot!(p1, [minimum(xs_cost), maximum(xs_cost)], [decentralized_cost, decentralized_cost],
+      seriestype=:line, color=:blue, linestyle=:dash, linewidth=2,
+      label="decentralized")
+          # Plot 2: std of cost across repeats at each delta_G, with log-x linear trend + anchor (std=0 by construction)
 xs_cost  = gdf[:, :delta_G]
 std_cost = gdf[:, :std_cost]
 p2 = plot(xs_cost, std_cost,
           seriestype=:scatter, xscale=:log10,
-          xlabel="epsilon ⋅ delta_G", ylabel="Std (Average Cost)",
+          xlabel=raw"delta_G/epsilon", ylabel="Std (Average Cost)",
           title="Std of Cost vs delta_G", legend=:topright,
           label="std", markershape=:circle, ms=4, color=:red)
 a2, b2 = loglinear_fit(xs_cost, std_cost)
@@ -90,8 +106,16 @@ plot!(p2, trend_x2, a2 .+ b2 .* log10.(trend_x2),
 plot!(p2, [x_anchor], [dg0[1, :std_cost]],
       seriestype=:scatter, markershape=:star5, ms=8, color=:black,
       label="δ_G=0 (det)")
-p3 = sweep_plot(df_log, gdf, dg0, x_anchor, :time,      "time",  "Time (seconds)",       "Execution Time vs delta_G")
-p4 = sweep_plot(df_log, gdf, dg0, x_anchor, :num_iters, "iters", "Number of Iterations", "Iterations vs delta_G")
+# Horizontal line at decentralized cost
+# plot!(p2, [minimum(xs_cost), maximum(xs_cost)], [decentralized_cost, decentralized_cost],
+#       seriestype=:line, color=:blue, linestyle=:dash, linewidth=2,
+#       label="decentralized")
+# # Horizontal line at decentralized (delta_G=0) cost
+# plot!(p2, [minimum(xs_cost), maximum(xs_cost)], [dg0[1, :std_cost], dg0[1, :std_cost]],
+#       seriestype=:line, color=:blue, linestyle=:dash, linewidth=2,
+#       label="decentralized")
+p3 = sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, :time,      "time",  "Time (seconds)",       "Execution Time vs delta_G")
+p4 = sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, :num_iters, "iters", "Number of Iterations", "Iterations vs delta_G")
 
 # Combine plots
 plot(p1, p2, p3, p4, layout=(2, 2), size=(1100, 850))
