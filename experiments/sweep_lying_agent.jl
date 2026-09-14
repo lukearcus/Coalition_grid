@@ -157,9 +157,10 @@ for (wname, s, dens) in WINDOWS
 end
 
 # ---------- Sweep ----------
-data = DataFrame(window=[], delta_G=[], lie_level=[], repeat=[],
-                 honest_avg_cost=[], liar_cost=[], total_avg_cost=[],
-                 num_iters=[], time=[], benefit_vs_dec=[], basin=[], clip_fraction=[])
+data = DataFrame(window=String[], delta_G=Float64[], lie_level=String[], repeat=Int[],
+                 honest_avg_cost=Float64[], liar_cost=Float64[], total_avg_cost=Float64[],
+                 num_iters=Float64[], time=Float64[], benefit_vs_dec=Float64[],
+                 basin=String[], clip_fraction=Float64[])
 
 total_runs = length(WINDOWS) * length(delta_G_values) * length(LIE_LEVELS) * num_repeats
 t_start = time()
