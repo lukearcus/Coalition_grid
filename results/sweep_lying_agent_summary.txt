@@ -1,0 +1,52 @@
+sweep_lying_agent summary
+subset_ids = [62, 28, 70, 37, 18, 40]
+liar_idx = 1 (building 62)
+lie_levels = ["truthful", "bounded", "fabrication"]
+lie_bound = 5000.0
+num_repeats = 5
+delta_G_values = [0.0, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0]
+windows = ["day37_best"]
+dec_avg = Dict("day37_best" => -6980.0867650604005)
+
+=== Window day37_best ===
+
+  lie_level = truthful
+    dg=0.0  honest=-363.46±0.0  liar=-40566.87  total=-7064.03  clip=0.0  n=5
+    dg=0.1  honest=-358.78±10.84  liar=-40563.87  total=-7059.62  clip=0.0  n=5
+    dg=1.0  honest=-361.71±13.73  liar=-40551.04  total=-7059.93  clip=0.0  n=5
+    dg=10.0  honest=-365.57±9.64  liar=-40562.26  total=-7065.02  clip=0.0  n=5
+    dg=100.0  honest=-361.63±9.18  liar=-40556.58  total=-7060.79  clip=0.0  n=5
+    dg=1000.0  honest=-358.19±10.75  liar=-40578.46  total=-7061.57  clip=0.0  n=5
+    dg=10000.0  honest=-368.27±5.04  liar=-40548.68  total=-7065.01  clip=0.0  n=5
+
+  lie_level = bounded
+    dg=0.1  honest=-379.33±13.97  liar=-40441.64  total=-7056.38  clip=0.297  n=4
+    dg=1.0  honest=-368.84±5.67  liar=-40445.38  total=-7048.26  clip=0.297  n=5
+    dg=10.0  honest=-376.69±15.78  liar=-40458.39  total=-7056.97  clip=0.297  n=5
+    dg=100.0  honest=-367.8±7.31  liar=-40435.72  total=-7045.79  clip=0.297  n=3
+    dg=1000.0  honest=-367.9±8.5  liar=-40452.2  total=-7048.61  clip=0.297  n=4
+    dg=10000.0  honest=-366.71±8.47  liar=-40444.42  total=-7046.32  clip=0.297  n=4
+
+  lie_level = fabrication
+    dg=0.1  honest=-305.07±22.58  liar=-40674.84  total=-7033.36  clip=0.0  n=5
+    dg=1.0  honest=-292.55±5.72  liar=-40647.87  total=-7018.43  clip=0.0  n=4
+    dg=10.0  honest=-292.93±6.92  liar=-40662.75  total=-7021.23  clip=0.0  n=5
+    dg=100.0  honest=-290.44±6.49  liar=-40649.52  total=-7016.95  clip=0.0  n=4
+    dg=1000.0  honest=-321.56±30.87  liar=-40674.79  total=-7047.1  clip=0.0  n=3
+    dg=10000.0  honest=-291.28±0.72  liar=-40664.02  total=-7020.07  clip=0.0  n=2
+
+  Degradation (honest_avg_cost - truthful_honest_avg_cost):
+    bounded:
+      dg=0.1  degradation=-20.55  (-5.73%)
+      dg=1.0  degradation=-7.14  (-1.97%)
+      dg=10.0  degradation=-11.12  (-3.04%)
+      dg=100.0  degradation=-6.17  (-1.71%)
+      dg=1000.0  degradation=-9.7  (-2.71%)
+      dg=10000.0  degradation=1.57  (0.43%)
+    fabrication:
+      dg=0.1  degradation=53.71  (14.97%)
+      dg=1.0  degradation=69.16  (19.12%)
+      dg=10.0  degradation=72.64  (19.87%)
+      dg=100.0  degradation=71.19  (19.69%)
+      dg=1000.0  degradation=36.64  (10.23%)
+      dg=10000.0  degradation=76.99  (20.91%)
