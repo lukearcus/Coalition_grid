@@ -389,6 +389,201 @@ function solve_inverse_optimality(
 end
 
 # ===========================================================================
+# Inverse Optimality MILP (Variant C — KKT, dual-free)
+# ===========================================================================
+# Full KKT conditions with duals as decision variables. No forward-solve
+# duals required. Strong duality is redundant (it follows from KKT for LPs).
+# Complementary slackness is encoded with indicator constraints → MILP.
+# z* fixing: at trading timesteps, μ is pinned by stationarity, eliminating
+# 2h binaries. Remaining: 6h+1 binaries (non-neg CS + capacity CS + final CS).
+
+function solve_inverse_optimality_kkt(
+        z_star::Vector{Float64}, h::Int, η_ch::Float64, η_dis::Float64,
+        pb::Vector{Float64}, ps::Vector{Float64};
+        objective_var::Symbol, objective_t::Int = 1, sense::Symbol = :min,
+        known_battery::Bool = false,
+        Q_b_val::Float64 = 0.0, P_b_val::Float64 = 0.0, SoC0_val::Float64 = 0.0,
+        time_limit::Float64 = 60.0)
+
+    z_tol = 1e-3  # SCS at 1e-6 tolerance gives ~1e-5 noise on z*
+    M_λ = 10.0 * maximum(pb)
+
+    model = Model(HiGHS.Optimizer)
+    set_silent(model)
+    set_optimizer_attribute(model, "presolve", "on")
+    set_optimizer_attribute(model, "time_limit", time_limit)
+
+    # --- Private parameters ---
+    @variable(model, -NL_MAX <= net_load[1:h] <= NL_MAX)
+    if known_battery
+        Q_b = Q_b_val
+        P_b = P_b_val
+        @variable(model, SoC_0 == SoC0_val)
+    else
+        @variable(model, 0 <= Q_b <= Q_MAX)
+        @variable(model, 0 <= P_b <= P_MAX)
+        @variable(model, 0 <= SoC_0 <= Q_MAX)
+    end
+
+    # --- Primal variables (finite bounds for indicator bridge) ---
+    @variable(model, 0 <= g_buy[1:h] <= NL_MAX)
+    @variable(model, 0 <= g_sell[1:h] <= NL_MAX)
+    @variable(model, 0 <= pos_δ[1:h] <= (known_battery ? P_b_val : P_MAX))
+    @variable(model, -(known_battery ? P_b_val : P_MAX) <= neg_δ[1:h] <= 0)
+    @variable(model, 0 <= charge[1:h] <= (known_battery ? Q_b_val : Q_MAX))
+
+    # --- Dual variables ---
+    @variable(model, -pb[t] <= μ[t=1:h] <= -ps[t])   # power balance dual
+    @variable(model, -M_λ <= λ_init <= M_λ)            # init SoC dual
+    if h > 1
+        @variable(model, -M_λ <= λ_dyn[t=2:h] <= M_λ)  # dynamics dual
+    end
+    @variable(model, 0 <= σ[1:h] <= M_λ)               # charge cap dual
+    @variable(model, 0 <= α[1:h] <= M_λ)                # pos cap dual
+    @variable(model, 0 <= β[1:h] <= M_λ)                # neg cap dual
+    @variable(model, 0 <= φ_prime <= M_λ)               # final constraint dual (>= 0)
+
+    # --- z* fixing: pin g_buy, g_sell, μ at trading timesteps ---
+    # SCS noise: |z*| < z_tol means no trade → round to 0
+    z_eff = [abs(z_star[t]) <= z_tol ? 0.0 : z_star[t] for t in 1:h]
+    for t in 1:h
+        if z_eff[t] > z_tol
+            fix(g_sell[t], 0.0; force = true)
+            @constraint(model, μ[t] == -pb[t])
+        elseif z_eff[t] < -z_tol
+            fix(g_buy[t], 0.0; force = true)
+            @constraint(model, μ[t] == -ps[t])
+        else
+            fix(g_buy[t], 0.0; force = true)
+            fix(g_sell[t], 0.0; force = true)
+        end
+    end
+
+    # --- Primal feasibility + observed z* ---
+    @constraint(model, obs[t=1:h], g_buy[t] - g_sell[t] == z_eff[t])
+    @constraint(model, pb_c[t=1:h],
+        net_load[t] + g_sell[t] + pos_δ[t] + neg_δ[t] == g_buy[t])
+    @constraint(model, init_c, charge[1] == SoC_0)
+    if h > 1
+        @constraint(model, dyn_c[t=2:h],
+            charge[t] == charge[t-1] + η_ch * pos_δ[t-1] + (1/η_dis) * neg_δ[t-1])
+    end
+    @constraint(model, pos_cap[t=1:h], pos_δ[t] <= (known_battery ? P_b_val : P_b))
+    @constraint(model, neg_cap[t=1:h], -neg_δ[t] <= (known_battery ? P_b_val : P_b))
+    @constraint(model, charge_cap[t=1:h], charge[t] <= (known_battery ? Q_b_val : Q_b))
+    if !known_battery
+        @constraint(model, soc_cap, SoC_0 <= Q_b)
+    end
+    @constraint(model, final_c, pos_δ[h] + neg_δ[h] + charge[h] >= 0)
+
+    # --- Complementary slackness (indicator constraints) ---
+    # Binaries: y_pos, y_neg, y_charge (non-neg CS) + y_σ, y_α, y_β (cap CS) + y_φ
+    @variable(model, y_pos[1:h], Bin)
+    @variable(model, y_neg[1:h], Bin)
+    @variable(model, y_charge[1:h], Bin)
+    @variable(model, y_σ[1:h], Bin)
+    @variable(model, y_α[1:h], Bin)
+    @variable(model, y_β[1:h], Bin)
+    @variable(model, y_φ, Bin)
+
+    Q_b_expr = known_battery ? Q_b_val : Q_b
+    P_b_expr = known_battery ? P_b_val : P_b
+
+    for t in 1:h
+        # --- pos_δ non-neg CS: τ_pos * pos_δ = 0 ---
+        # τ_pos = -μ + η_ch*λ_dyn[t+1] + α  (t < h)
+        # τ_pos = -μ[h] - φ' + α[h]          (t = h)
+        @constraint(model, y_pos[t] => {pos_δ[t] == 0})
+        if t < h
+            @constraint(model, !y_pos[t] => {-μ[t] + η_ch * λ_dyn[t+1] + α[t] == 0})
+            @constraint(model, -μ[t] + η_ch * λ_dyn[t+1] + α[t] >= 0)
+        else
+            @constraint(model, !y_pos[t] => {-μ[t] - φ_prime + α[t] == 0})
+            @constraint(model, -μ[t] - φ_prime + α[t] >= 0)
+        end
+
+        # --- neg_δ non-neg CS: τ_neg * neg_δ = 0 (neg_δ ≤ 0, upper bound at 0) ---
+        # τ_neg = μ - λ_dyn[t+1]/η_dis + β  (t < h)
+        # τ_neg = μ[h] + φ' + β[h]            (t = h)
+        @constraint(model, y_neg[t] => {neg_δ[t] == 0})
+        if t < h
+            @constraint(model, !y_neg[t] => {μ[t] - λ_dyn[t+1] / η_dis + β[t] == 0})
+            @constraint(model, μ[t] - λ_dyn[t+1] / η_dis + β[t] >= 0)
+        else
+            @constraint(model, !y_neg[t] => {μ[t] + φ_prime + β[t] == 0})
+            @constraint(model, μ[t] + φ_prime + β[t] >= 0)
+        end
+
+        # --- charge non-neg CS: τ_charge * charge = 0 ---
+        # τ_charge = -λ_init + λ_dyn[2] + σ[1]     (t=1, h>1)
+        # τ_charge = -λ_init - φ' + σ[1]             (t=1, h=1)
+        # τ_charge = -λ_dyn[t] + λ_dyn[t+1] + σ[t]  (2 ≤ t ≤ h-1)
+        # τ_charge = -λ_dyn[h] - φ' + σ[h]           (t=h)
+        @constraint(model, y_charge[t] => {charge[t] == 0})
+        if t == 1
+            if h > 1
+                @constraint(model, !y_charge[t] => {-λ_init + λ_dyn[2] + σ[1] == 0})
+                @constraint(model, -λ_init + λ_dyn[2] + σ[1] >= 0)
+            else
+                @constraint(model, !y_charge[t] => {-λ_init - φ_prime + σ[1] == 0})
+                @constraint(model, -λ_init - φ_prime + σ[1] >= 0)
+            end
+        elseif t < h
+            @constraint(model, !y_charge[t] => {-λ_dyn[t] + λ_dyn[t+1] + σ[t] == 0})
+            @constraint(model, -λ_dyn[t] + λ_dyn[t+1] + σ[t] >= 0)
+        else
+            @constraint(model, !y_charge[t] => {-λ_dyn[t] - φ_prime + σ[t] == 0})
+            @constraint(model, -λ_dyn[t] - φ_prime + σ[t] >= 0)
+        end
+
+        # --- Capacity CS ---
+        # σ: either σ = 0 or charge = Q_b
+        @constraint(model, y_σ[t] => {σ[t] == 0})
+        @constraint(model, !y_σ[t] => {charge[t] == Q_b_expr})
+
+        # α: either α = 0 or pos_δ = P_b
+        @constraint(model, y_α[t] => {α[t] == 0})
+        @constraint(model, !y_α[t] => {pos_δ[t] == P_b_expr})
+
+        # β: either β = 0 or -neg_δ = P_b
+        @constraint(model, y_β[t] => {β[t] == 0})
+        @constraint(model, !y_β[t] => {-neg_δ[t] == P_b_expr})
+    end
+
+    # --- Final constraint CS: φ' = 0 or final constraint tight ---
+    @constraint(model, y_φ => {φ_prime == 0})
+    @constraint(model, !y_φ => {pos_δ[h] + neg_δ[h] + charge[h] == 0})
+
+    # --- Objective ---
+    if objective_var == :net_load
+        obj = net_load[objective_t]
+    elseif objective_var == :Q_b
+        known_battery && return Q_b_val, "FIXED"
+        obj = Q_b
+    elseif objective_var == :P_b
+        known_battery && return P_b_val, "FIXED"
+        obj = P_b
+    elseif objective_var == :SoC_0
+        known_battery && return SoC0_val, "FIXED"
+        obj = SoC_0
+    else
+        error("Unknown objective_var: $objective_var")
+    end
+
+    if sense == :min
+        @objective(model, Min, obj)
+    else
+        @objective(model, Max, obj)
+    end
+
+    optimize!(model)
+
+    status = string(termination_status(model))
+    val = (status == "OPTIMAL" || primal_status(model) == MOI.FEASIBLE_POINT) ? value(obj) : NaN
+    return val, status
+end
+
+# ===========================================================================
 # Dual verification (sanity check)
 # ===========================================================================
 
@@ -432,8 +627,9 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
         param = String[], t = Int[],
         theta_min_feas = Float64[], theta_max_feas = Float64[],
         theta_min_opt = Float64[], theta_max_opt = Float64[],
+        theta_min_kkt = Float64[], theta_max_kkt = Float64[],
         theta_true = Float64[],
-        ratio_feas = Float64[], ratio_opt = Float64[],
+        ratio_feas = Float64[], ratio_opt = Float64[], ratio_kkt = Float64[],
     )
 
     kb_args = if known_battery
@@ -455,11 +651,17 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
             objective_var=:net_load, objective_t=t, sense=:min, known_battery=known_battery)
         o_max, _ = solve_inverse_optimality(fr;
             objective_var=:net_load, objective_t=t, sense=:max, known_battery=known_battery)
+        k_min, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
+            fr.pb, fr.ps; objective_var=:net_load, objective_t=t, sense=:min, kb_args...)
+        k_max, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
+            fr.pb, fr.ps; objective_var=:net_load, objective_t=t, sense=:max, kb_args...)
 
         θ_true = fr.net_load_true[t]
         denom = max(abs(θ_true), 1.0)
-        push!(results, ["net_load", t, v_min, v_max, o_min, o_max, θ_true,
-            feas ? (v_max - v_min) / denom : NaN, (o_max - o_min) / denom])
+        push!(results, ["net_load", t, v_min, v_max, o_min, o_max, k_min, k_max, θ_true,
+            feas ? (v_max - v_min) / denom : NaN,
+            (o_max - o_min) / denom,
+            (k_max - k_min) / denom])
     end
 
     if feas
@@ -472,11 +674,15 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
                 objective_var=param, sense=:min, known_battery=known_battery)
             o_max, _ = solve_inverse_optimality(fr;
                 objective_var=param, sense=:max, known_battery=known_battery)
+            k_min, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
+                fr.pb, fr.ps; objective_var=param, sense=:min, kb_args...)
+            k_max, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
+                fr.pb, fr.ps; objective_var=param, sense=:max, kb_args...)
 
             θ_true = param == :Q_b ? fr.Q_b : param == :P_b ? fr.P_b : fr.SoC0
             denom = max(abs(θ_true), 1.0)
-            push!(results, [string(param), 0, v_min, v_max, o_min, o_max, θ_true,
-                (v_max - v_min) / denom, (o_max - o_min) / denom])
+            push!(results, [string(param), 0, v_min, v_max, o_min, o_max, k_min, k_max, θ_true,
+                (v_max - v_min) / denom, (o_max - o_min) / denom, (k_max - k_min) / denom])
         end
     end
 
@@ -485,17 +691,20 @@ end
 
 function print_bounds_table(results::DataFrame, title::String)
     println("\n=== $title ===")
-    println("=" ^ 120)
-    @printf("%-12s %4s %12s %12s %12s %12s %12s %10s %10s\n",
-        "Param", "t", "min_feas", "max_feas", "min_opt", "max_opt", "true", "ratio_feas", "ratio_opt")
-    println("-" ^ 120)
+    println("=" ^ 150)
+    @printf("%-12s %4s %12s %12s %12s %12s %12s %12s %12s %10s %10s %10s\n",
+        "Param", "t", "min_feas", "max_feas", "min_opt", "max_opt",
+        "min_kkt", "max_kkt", "true", "ratio_feas", "ratio_opt", "ratio_kkt")
+    println("-" ^ 150)
     for row in eachrow(results)
-        @printf("%-12s %4d %12.3f %12.3f %12.3f %12.3f %12.3f %10.3f %10.3f\n",
+        @printf("%-12s %4d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %10.3f %10.3f %10.3f\n",
             row.param, row.t, row.theta_min_feas, row.theta_max_feas,
-            row.theta_min_opt, row.theta_max_opt, row.theta_true,
-            row.ratio_feas, row.ratio_opt)
+            row.theta_min_opt, row.theta_max_opt,
+            row.theta_min_kkt, row.theta_max_kkt,
+            row.theta_true,
+            row.ratio_feas, row.ratio_opt, row.ratio_kkt)
     end
-    println("=" ^ 120)
+    println("=" ^ 150)
 end
 
 # ===========================================================================
@@ -536,6 +745,8 @@ function main()
     nl_known   = res_known[res_known.param .== "net_load", :]
 
     p1 = plot(1:h, nl_unknown.theta_true, label="true", lw=2, color=:black)
+    plot!(1:h, nl_unknown.theta_min_kkt, fillrange=nl_unknown.theta_max_kkt,
+        alpha=0.25, color=:orange, label="kkt bounds (unknown batt)")
     plot!(1:h, nl_unknown.theta_min_opt, fillrange=nl_unknown.theta_max_opt,
         alpha=0.3, color=:red, label="opt bounds (unknown batt)")
     plot!(1:h, nl_unknown.theta_min_feas, fillrange=nl_unknown.theta_max_feas,
@@ -558,7 +769,8 @@ function main()
     cross_results = DataFrame(
         building = Int[], Q_b = Float64[], P_b = Float64[],
         mean_ratio_feas = Float64[], mean_ratio_opt = Float64[],
-        mean_ratio_opt_kb = Float64[],
+        mean_ratio_opt_kb = Float64[], mean_ratio_kkt = Float64[],
+        mean_ratio_kkt_kb = Float64[],
     )
 
     for bid in building_ids
@@ -572,11 +784,14 @@ function main()
         nl_res_kb = res_kb[res_kb.param .== "net_load", :]
 
         push!(cross_results, (bid, fr.Q_b, fr.P_b,
-            NaN, mean(nl_res.ratio_opt), mean(nl_res_kb.ratio_opt)))
+            NaN, mean(nl_res.ratio_opt), mean(nl_res_kb.ratio_opt),
+            mean(nl_res.ratio_kkt), mean(nl_res_kb.ratio_kkt)))
 
         println("Building $bid: Q_b=$(fr.Q_b), P_b=$(fr.P_b) | "
                 * "opt=$(round(mean(nl_res.ratio_opt), digits=2)), "
-                * "opt+kb=$(round(mean(nl_res_kb.ratio_opt), digits=2))")
+                * "opt+kb=$(round(mean(nl_res_kb.ratio_opt), digits=2)), "
+                * "kkt=$(round(mean(nl_res.ratio_kkt), digits=2)), "
+                * "kkt+kb=$(round(mean(nl_res_kb.ratio_kkt), digits=2))")
     end
 
     # Plot: mean observability ratio by building
@@ -584,6 +799,10 @@ function main()
         marker=:s, label="Optimality (unknown batt)", lw=2)
     plot!(cross_results.building, cross_results.mean_ratio_opt_kb,
         marker=:^, label="Optimality (known batt)", lw=2)
+    plot!(cross_results.building, cross_results.mean_ratio_kkt,
+        marker=:d, label="KKT (unknown batt)", lw=2)
+    plot!(cross_results.building, cross_results.mean_ratio_kkt_kb,
+        marker=:v, label="KKT (known batt)", lw=2)
     xlabel!("Building ID"); ylabel!("Mean observability ratio")
     title!("net_load Observability by Building")
     savefig(p2, "results/observability_cross_building.pdf")
@@ -600,6 +819,7 @@ function main()
     b = all_buildings[1]
     hor_results = DataFrame(
         h = Int[], mean_ratio_opt = Float64[], mean_ratio_opt_kb = Float64[],
+        mean_ratio_kkt = Float64[], mean_ratio_kkt_kb = Float64[],
     )
 
     for h_val in horizons
@@ -613,16 +833,23 @@ function main()
         nl_h = res_h[res_h.param .== "net_load", :]
         nl_h_kb = res_h_kb[res_h_kb.param .== "net_load", :]
 
-        push!(hor_results, (h_val, mean(nl_h.ratio_opt), mean(nl_h_kb.ratio_opt)))
+        push!(hor_results, (h_val, mean(nl_h.ratio_opt), mean(nl_h_kb.ratio_opt),
+            mean(nl_h.ratio_kkt), mean(nl_h_kb.ratio_kkt)))
 
         println("h=$h_val: opt=$(round(mean(nl_h.ratio_opt), digits=2)), "
-                * "opt+kb=$(round(mean(nl_h_kb.ratio_opt), digits=2))")
+                * "opt+kb=$(round(mean(nl_h_kb.ratio_opt), digits=2)), "
+                * "kkt=$(round(mean(nl_h.ratio_kkt), digits=2)), "
+                * "kkt+kb=$(round(mean(nl_h_kb.ratio_kkt), digits=2))")
     end
 
     p3 = plot(hor_results.h, hor_results.mean_ratio_opt,
         marker=:s, label="Optimality (unknown batt)", lw=2)
     plot!(hor_results.h, hor_results.mean_ratio_opt_kb,
         marker=:^, label="Optimality (known batt)", lw=2)
+    plot!(hor_results.h, hor_results.mean_ratio_kkt,
+        marker=:d, label="KKT (unknown batt)", lw=2)
+    plot!(hor_results.h, hor_results.mean_ratio_kkt_kb,
+        marker=:v, label="KKT (known batt)", lw=2)
     xlabel!("Horizon length h"); ylabel!("Mean observability ratio")
     title!("net_load Observability vs Horizon (Building 1)")
     savefig(p3, "results/observability_horizon_sensitivity.pdf")
