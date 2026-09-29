@@ -3,6 +3,22 @@ using Combinatorics
 using StatsBase
 using Base.Threads
 
+# =============================================================================
+# Coalition formation — two paradigms (see AGENTS.md):
+#
+#   Limited information (non-DP) — privacy_focussed_coals
+#     Agents share only their net consumption vectors, not full cost functions.
+#     Deterministic greedy merge by compatibility value + myopic split-check.
+#     No differential-privacy guarantee. Fully reproducible.
+#
+#   Differential privacy (DP) — privacy_focussed_coals_with_delta
+#     Exponential mechanism over pair values; delta_G is the privacy budget
+#     (delta_G=0 -> argmax/deterministic pick; larger -> softer, more private
+#     sampling). All pairs enter the pool (incompatible ones get value 0) so the
+#     candidate set does not leak data. The myopic split-check is removed
+#     (it would break the DP guarantee). Stochastic — set a seed.
+# =============================================================================
+
 # Return the building-id list for an agent (Int singleton or Vector coalition)
 agent_ids(a::Int) = [a]
 agent_ids(a::Vector) = a
@@ -302,6 +318,20 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
     return agents, [coal_vars[agent] for agent in agents], num_iters
 end
 
+"""
+    privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_look_ahead, receding_horizon=false, delta_G=100.0)
+
+Differentially-private coalition formation for MPC buildings (exponential mechanism).
+
+`delta_G` is the privacy budget: 0.0 → argmax (deterministic pick, still
+mechanism-shaped but no randomness), larger → softer sampling (more private).
+All candidate pairs enter the sampling pool (incompatible pairs get value 0)
+so the candidate set does not depend on the data. No post-hoc split-check (it
+would violate the DP guarantee). Stochastic — call `Random.seed!` for
+reproducibility.
+
+Returns `(agents, vars, num_iters)`.
+"""
 function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0)
     agents = Vector(1:length(buildings))
     done = false
@@ -521,7 +551,131 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     return agents, vars, num_iters
 end
 
+"""
+    privacy_focussed_coals(buildings, max_coal_size, k, num_look_ahead, receding_horizon=false)
+
+Limited-information (NON-DP) coalition formation for MPC buildings.
+
+Agents share only their net consumption vectors (not full cost functions).
+Deterministically forms coalitions by: (1) solving each agent/coalition via
+ADMM, (2) scoring pairs by energy-trading compatibility, (3) greedily merging
+the best non-overlapping pairs up to `max_coal_size`, (4) a myopic split-check
+that dissolves any coalition whose joint first-step cost exceeds the members
+acting alone.
+
+Returns `(agents, vars, num_iters)`. Deterministic — no RNG.
+"""
 function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
-    # Wrapper for backward compatibility with existing code
-    return privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_look_ahead, receding_horizon, 100.0)
+    agents = Vector(1:length(buildings))
+    done = false
+    energy_diff = opt.energy_cost-opt.energy_sale
+    num_iters=0
+    vars = 0
+    dec_single_vals = 0
+    singleton_cache = Dict{Int, Tuple{Any, Vector{Float64}}}()
+    first_round = true
+    while !done
+        done = true
+        outs = Vector{Any}(undef, length(agents))
+        for i in 1:length(agents)
+            agent = agents[i]
+            if agent isa Int && haskey(singleton_cache, agent)
+                outs[i] = (singleton_cache[agent][1], 0)
+            elseif agent isa Int
+                res = single_optimise_ADMM(opt, buildings[agent], k, num_look_ahead, receding_horizon)
+                cv = vec(sum(value(res[1][2]-res[1][3]), dims=2))
+                cv = [isnan(x) ? 0.0 : x for x in cv]
+                singleton_cache[agent] = (res[1], cv)
+                outs[i] = (res[1], res[2])
+            else
+                res = single_optimise_ADMM(opt, buildings[[agent...]], k, num_look_ahead, receding_horizon)
+                outs[i] = (res[1], res[2])
+            end
+        end
+        vars = [out[1] for out in outs]
+        if first_round
+            dec_single_vals = [value(out[2][1])*energy_cost_k(opt,k,1)-value(out[3][1])*energy_sale_k(opt,k,1) for out in vars]
+            first_round = false
+        end
+        num_iters += sum([out[2] for out in outs])
+
+        cons_vec = Dict{Any, Vector{Float64}}()
+        for (agent, var) in zip(agents, vars)
+            if agent isa Int && haskey(singleton_cache, agent)
+                cons_vec[agent] = singleton_cache[agent][2]
+            else
+                cv = vec(sum(value(var[2]-var[3]), dims=2))
+                cons_vec[agent] = [isnan(x) ? 0.0 : x for x in cv]
+            end
+        end
+
+        poss_coals = collect(combinations(agents,2))
+        poss_coal_vals = Dict()
+        for c in poss_coals
+            num_look_ahead = min(length(buildings[1].act_cons)-k+1, num_look_ahead)
+            compatible_slots = (cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]])))[1:num_look_ahead]
+            if any(compatible_slots)
+                poss_coal_vals[c] = energy_diff[1:num_look_ahead]'*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]])))
+            end
+        end
+        sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
+        new_agents = Vector()
+        coaled_agents = Vector()
+        for elem in sorted_coal_vals
+            if !(elem[1][1] in coaled_agents) && !(elem[1][2] in coaled_agents)
+                new_coal = Vector()
+                append!(new_coal, elem[1][1], elem[1][2])
+                if length(new_coal) <= max_coal_size
+                    push!(new_agents, new_coal)
+                    push!(coaled_agents, elem[1][1], elem[1][2])
+                    done = false
+                end
+            end
+        end
+        for agent in agents
+            if !(agent in coaled_agents)
+                push!(new_agents, agent)
+            end
+        end
+
+        agents = new_agents
+    end
+    pre_split_agents = agents
+    pre_split_vars = vars
+    new_agents = Vector()
+    added = false
+    for (agent, var) in zip(agents,vars)
+        added = false
+        if length(agent) > 1
+            dec_val = sum(sum(dec_single_vals[i] for i in agent))
+            coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
+            if dec_val >= coal_single_val
+                push!(new_agents, agent)
+                added = true
+            else
+                for i in agent
+                    push!(new_agents, i)
+                end
+            end
+        else
+            push!(new_agents,agent)
+        end
+    end
+    if added
+        agents = new_agents
+    end
+    vars_by_agent = Dict{Any, Any}(zip(pre_split_agents, pre_split_vars))
+    vars = Vector{Any}(undef, length(agents))
+    for (i, agent) in enumerate(agents)
+        if haskey(vars_by_agent, agent)
+            vars[i] = vars_by_agent[agent]
+        elseif agent isa Int && haskey(singleton_cache, agent)
+            vars[i] = singleton_cache[agent][1]
+        else
+            res = single_optimise_ADMM(opt, buildings[agent], k, num_look_ahead, receding_horizon)
+            num_iters += res[2]
+            vars[i] = res[1]
+        end
+    end
+    return agents, vars, num_iters
 end

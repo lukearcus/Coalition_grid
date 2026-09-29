@@ -1,19 +1,22 @@
-# Regression test for privacy_focussed_coals refactor.
+# Regression test for coalition formation.
 #
-# Two test cases:
-#   Case 1 (deterministic, singleton path): 8 buildings, k=1, horizon=2, 4 steps.
-#     No compatible pairs -> no merges -> RNG-independent. Asserts exact
+# Three test cases exercise both paradigms:
+#   Case 1 (non-DP, singleton path): 8 buildings, k=1, horizon=2, 4 steps.
+#     No compatible pairs -> no merges -> deterministic. Asserts exact
 #     coalition match and tight cost tolerance (1e-3 relative).
-#   Case 2 (stochastic, merge path): 8 buildings, k=40, horizon=8, 96 steps.
-#     21 compatible pairs -> merges happen -> RNG-dependent coalition structure.
+#   Case 2 (non-DP, merge path): 8 buildings, k=40, horizon=8, 96 steps.
+#     Compatible pairs -> greedy merges + split-check. Deterministic, so
+#     asserts exact coalition match and tight cost tolerance (1e-3 relative).
+#   Case 3 (DP, merge path): 8 buildings, k=40, horizon=8, 96 steps, delta_G=100.
+#     Exponential-mechanism sampling -> coalition structure is RNG-dependent.
 #     Asserts validity (every building in exactly one coalition, no coalition
 #     exceeds max_coal_size) and cost within a loose tolerance (20% relative)
 #     of the baseline, since the per-seed coalition structure varies.
 #
 # Usage:
-#   julia --project=... test_regression.jl              # run all cases
-#   julia --project=... test_regression.jl --baseline  # record baselines
-#   julia --project=... test_regression.jl --case 1     # run only case 1
+#   julia --threads auto test_regression.jl              # run all cases
+#   julia --threads auto test_regression.jl --baseline  # record baselines
+#   julia --threads auto test_regression.jl --case 1     # run only case 1
 include("Buildings.jl")
 include("MPC_optimiser.jl")
 include("Coalition.jl")
@@ -35,14 +38,17 @@ struct CaseConfig
     horizon::Int
     num_steps::Int
     seed::Int
-    exact_match::Bool       # assert exact coalition match (deterministic case)
+    method::Symbol          # :nondp -> privacy_focussed_coals; :dp -> privacy_focussed_coals_with_delta
+    delta_G::Float64        # privacy budget (only used by :dp)
+    exact_match::Bool       # assert exact coalition match (deterministic cases)
     cost_tol_rel::Float64   # relative cost tolerance
     baseline_file::String
 end
 
 const CASES = [
-    CaseConfig("singleton", 8, 6, 1, 2, 4, 42, true, 1e-3, "results/baseline_regression.txt"),
-    CaseConfig("merges", 8, 6, 40, 8, 96, 42, false, 0.20, "results/baseline_regression_k40.txt"),
+    CaseConfig("nondp_singleton", 8, 6, 1, 2, 4, 42, :nondp, 0.0, true, 1e-3, "results/baseline_regression.txt"),
+    CaseConfig("nondp_merges",   8, 6, 40, 8, 96, 42, :nondp, 0.0, true, 1e-3, "results/baseline_regression_k40.txt"),
+    CaseConfig("dp_merges",      8, 6, 40, 8, 96, 42, :dp, 100.0, false, 0.20, "results/baseline_regression_dp.txt"),
 ]
 
 # ---- Helpers ----
@@ -87,7 +93,11 @@ function run_case(cfg::CaseConfig)
     buildings, energy_cost, energy_sale, timestamps = MPC_load_from_CSV(cfg.num_builds, cfg.num_steps)
     global opt = MPC_optimiser(energy_cost', energy_sale')
     Random.seed!(cfg.seed)
-    coal, vars, num_iters = privacy_focussed_coals(buildings, cfg.max_coal, cfg.k, cfg.horizon)
+    if cfg.method == :nondp
+        coal, vars, num_iters = privacy_focussed_coals(buildings, cfg.max_coal, cfg.k, cfg.horizon)
+    else
+        coal, vars, num_iters = privacy_focussed_coals_with_delta(buildings, cfg.max_coal, cfg.k, cfg.horizon, false, cfg.delta_G)
+    end
     total_cost = 0.0
     for (agent, var) in zip(coal, vars)
         total_cost += sum(value(var[5]))
