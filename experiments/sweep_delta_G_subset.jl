@@ -101,7 +101,7 @@ const OUT_SUM = "results/sweep_delta_G_subset_summary.txt"
 # ---------- Load data and helpers ----------
 # Load all 70 buildings (full 4766-row series), then slice subset + window.
 println("Loading data for 70 buildings (full series)...")
-all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(70, 4766)
+all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 4766, "synthetic_data")
 opt = MPC_optimiser(energy_cost', energy_sale')
 println("Loaded. num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
 
