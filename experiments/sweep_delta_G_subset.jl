@@ -1,43 +1,42 @@
 # =============================================================================
-# delta_G sweep on the high-complementarity subset [62, 28, 70, 37, 18, 40].
+# delta_G sweep on a high-complementarity subset of the synthetic dataset.
 #
-# Background: a quick diagnostic (3 repeats, 5 delta_G) on this subset showed
-# variance increasing monotonically with delta_G (0.21 -> 221 std) and three
-# cost basins: ~0% / 2.2% / 5.6% coalition benefit vs decentralised. This is
-# the exploration-exploitation tradeoff one expects when complementarity is
-# high enough that the greedy merge is genuinely good but a better global
-# coalition exists.
+# The synthetic data has 30 buildings across 10 archetypes (solar, wind,
+# office, industrial, residential, etc.) with 4-tier TOU prices (buy-sell
+# spread 0.05–0.30) and 7 days × 96 steps = 672 rows. Mean pairwise
+# complementarity is ~39% (vs 11% for the original data).
 #
-# This script is the full sweep: fine delta_G grid, many repeats, optional
-# multi-window, basin classification. Designed to run on a server.
+# Subset: 6 buildings chosen for maximum temporal complementarity:
+#   1  = solar farm     (midday seller)
+#   10 = industrial     (always buyer, flat)
+#   16 = data center    (always buyer, high)
+#   25 = coastal wind   (overnight seller, 3am peak)
+#   28 = hilltop wind   (evening seller, 5pm peak)
+#   7  = residential    (AM/PM buyer, double peak)
+#
+# This gives 3 net sellers with staggered generation profiles + 3 net buyers
+# with distinct consumption patterns — the conditions where coalition
+# formation is most valuable and the privacy/cost tradeoff most visible.
 #
 # ============ Configuration (edit here or set via ENV vars) ============
-#   NUM_REPEATS    (default 20)  repeats per (window, delta_G)
-#   DELTA_G_POINTS (default 20)  log-spaced points from 0.01 to 1000
+#   NUM_REPEATS    (default 10)  repeats per (window, delta_G)
+#   DELTA_G_POINTS (default 10)  log-spaced points from 0.1 to 10000
 #                                (plus delta_G=0 deterministic anchor)
 #
-# Runtime estimate (day 37 only, 6 buildings, ~80s/run on a modest box):
-#   (1 + DELTA_G_POINTS) * NUM_REPEATS * 80s
-#   = 21 * 20 * 80s ~= 9.3 hours
-# On a many-core server the @threads inside coal_MPC speeds singleton solves
-# but the outer sweep is sequential, so wall time is similar. Reduce
-# NUM_REPEATS or DELTA_G_POINTS to shorten.
-#
 # ============ Windows ============
-# Default: day 37 only (best window for this subset, opp-density 0.254).
-# To sweep multiple windows, add (name, start_row, opp_density) tuples to
-# WINDOWS. Each window recomputes its own decentralised baseline. Adding
-# windows multiplies runtime by |WINDOWS|.
+# Two windows: day 0 (weekday — schools/offices active) and day 5 (weekend —
+# different demand pattern). Each window recomputes its own decentralised
+# baseline.
 #
 # ============ Known issue (worked around) ============
 # coal_MPC indexes buy/sell by b.id assuming id==position
-# (MPC_optimiser.jl:525,527,540,542). The subset IDs [62,28,70,...] would
+# (MPC_optimiser.jl:525,527,540,542). The subset IDs [1,10,16,...] would
 # crash, so slice_window re-IDs buildings to 1..N. Fix the indexing bug
 # separately and this workaround can be dropped.
 #
 # ============ Run ============
 #   julia --threads auto experiments/sweep_delta_G_subset.jl
-# (from repo root -- loaders read data/ and cleaned_data/ relative to cwd)
+# (from repo root -- loaders read synthetic_data/ relative to cwd)
 # =============================================================================
 
 try
@@ -55,11 +54,10 @@ include("../Coalition.jl")
 include("../load_EMS_data.jl")
 
 # ---------- Configuration ----------
-# High-complementarity subset: 3 PV producers (b62 6.4 MW, b28/b70 ~0.2-0.9 MW,
-# each ~42-44% producer) + 3 net consumers (b37/b18/b40, ~1-3% producer, ~0.1 MW).
-# Opp-density 0.202 mean / 0.254 peak across 49 days (vs 0.102 for buildings 1-10).
-const SUBSET_IDS = [62, 28, 70, 37, 18, 40]
-const SUBSET_IDS = [1,2,3,4,5,6,7,8,9,10]
+# High-complementarity subset: 3 net sellers with staggered generation
+# (solar midday, coastal wind overnight, hilltop wind evening) + 3 net buyers
+# (industrial 24/7, data center 24/7, residential AM/PM peaks).
+const SUBSET_IDS = [1, 10, 16, 25, 28, 7]
 const num_builds = length(SUBSET_IDS)
 const max_coal_size = 6
 const num_ahead = 8
@@ -78,30 +76,27 @@ const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "10"))
 const delta_G_values = [0.0; 10 .^ range(-1, 4; length=max(delta_g_points, 2))]
 
 # Windows: (name, start_row, opp_density). day d starts at row d*96+1.
-# Default = day 37 only (best). Add more to study complementarity's effect on
-# the variance curve; e.g. day 0 (subset's worst, 0.148) and day 43 (0.242).
+# Day 0 = weekday (schools/offices active), day 5 = weekend (schools off,
+# offices off — different demand pattern).
 const WINDOWS = [
-    ("day37_best", 3553, 0.254),
-    # ("day43_mid",  4129, 0.242),
-    # ("day0_worst", 1,    0.148),
+    ("day0_weekday", 1,   0.0),
+    ("day5_weekend", 481, 0.0),
 ]
 
-# Basin classification (heuristic, calibrated to day 37 where basins sit at
-# benefit ~6 / ~157 / ~388). Thresholds are absolute benefit (cost units);
-# if you add windows with very different |dec_avg|, switch these to relative
-# thresholds (benefit / |dec_avg|) or recalibrate per window.
-const BASIN_NONE  = 50.0    # benefit < 50  -> "A_none"   (~0% coalition value)
-const BASIN_LOCAL = 250.0   # benefit < 250 -> "B_local"  (greedy local opt)
-                             # benefit >=250 -> "C_global" (best global coal)
+# Basin classification (relative to dec_avg, so it auto-calibrates to the
+# synthetic data's price/consumption scale). Thresholds are fractions of
+# |dec_avg|: benefit < 2% -> "A_none", < 8% -> "B_local", >= 8% -> "C_global".
+const BASIN_NONE_PCT  = 0.02
+const BASIN_LOCAL_PCT = 0.08
 
 # Output files (incremental writes survive a crash).
-const OUT_CSV = "results/sweep_delta_G_subset.csv"
-const OUT_SUM = "results/sweep_delta_G_subset_summary.txt"
+const OUT_CSV = "results/sweep_delta_G_synthetic.csv"
+const OUT_SUM = "results/sweep_delta_G_synthetic_summary.txt"
 
 # ---------- Load data and helpers ----------
-# Load all 70 buildings (full 4766-row series), then slice subset + window.
-println("Loading data for 70 buildings (full series)...")
-all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 4766, "synthetic_data")
+# Load all 30 synthetic buildings (672-row series), then slice subset + window.
+println("Loading synthetic data for 30 buildings (672 steps)...")
+all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 672, "synthetic_data")
 opt = MPC_optimiser(energy_cost', energy_sale')
 println("Loaded. num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
 
@@ -118,7 +113,7 @@ function slice_window(buildings, subset_ids, s, nsteps)
     return out
 end
 
-basin_of(benefit) = benefit < BASIN_NONE ? "A_none" : benefit < BASIN_LOCAL ? "B_local" : "C_global"
+basin_of(benefit, dec_avg) = benefit < BASIN_NONE_PCT * abs(dec_avg) ? "A_none" : benefit < BASIN_LOCAL_PCT * abs(dec_avg) ? "B_local" : "C_global"
 
 # ---------- Per-window decentralised baselines ----------
 println("\nComputing decentralised baselines per window:")
@@ -173,13 +168,13 @@ for (wname, s, dens) in WINDOWS
                 runtime = t2 - t1
                 avg_cost = res / num_builds
                 benefit = dec_avg[wname] - avg_cost   # positive = coalition cheaper
-                push!(data, [wname, delta_G, repeat, avg_cost, num_iters, runtime, benefit, basin_of(benefit)])
+                push!(data, [wname, delta_G, repeat, avg_cost, num_iters, runtime, benefit, basin_of(benefit, dec_avg[wname])])
 
                 CSV.write(OUT_CSV, data)
                 done_runs += 1
                 elapsed = time() - t_start
                 eta = done_runs > 1 ? elapsed / done_runs * (total_runs - done_runs) : 0.0
-                println("  [$wname] dg=$delta_G rep=$repeat cost=$(round(avg_cost, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) basin=$(basin_of(benefit)) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
+                println("  [$wname] dg=$delta_G rep=$repeat cost=$(round(avg_cost, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) basin=$(basin_of(benefit, dec_avg[wname])) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
             catch e
                 println("  FAILED [$wname] dg=$delta_G rep=$repeat: $(typeof(e)): $e")
             end
@@ -193,7 +188,7 @@ println("\n============================================================")
 println("Summary: subset=$(SUBSET_IDS)  num_repeats=$num_repeats")
 println("============================================================")
 open(OUT_SUM, "w") do io
-    println(io, "sweep_delta_G_subset summary")
+    println(io, "sweep_delta_G_synthetic summary")
     println(io, "subset_ids = $(SUBSET_IDS)")
     println(io, "num_repeats = $num_repeats")
     println(io, "delta_G_values = $(delta_G_values)")
