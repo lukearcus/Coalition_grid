@@ -328,7 +328,7 @@ function ADMM_coal_update_solve(cache::ADMMCoalCache, lambda::Vector{Vector{Floa
 	return value.(cache.coal_exch)
 end
 
-function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false,liar_id::Union{Int,Nothing}=nothing,lie_level::String="truthful")
 	num_builds = bs.size[1]
 	if num_builds == 1
 		return single_optimise(opt,bs,k,num_look_ahead,receding_horizon)[2], 1
@@ -366,6 +366,24 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 			states[ind] = ADMM_build_opt_solve(build_caches[ind], new_coal[:,ind], lambdas[ind], c)
 		end
 			proposed_coal = [value(state[6]) for state in states]
+
+			# Liar in coalition: override reported trades to steal partners'
+			# energy at current step, promise to return next step. The
+			# coalition dissolves each k (coal_MPC re-calls coal_former),
+			# so the promise is never realised.
+			if liar_id !== nothing && lie_level != "truthful"
+				liar_pos = findfirst(b -> b.id == liar_id, bs)
+				if liar_pos !== nothing
+					stolen = sum(bs[j].pred_prod[k,1] + bs[j].SoC[k]
+					             for j in 1:num_builds if j != liar_pos)
+					lie_coal = zeros(num_steps)
+					lie_coal[1] = -stolen
+					if num_steps >= 2
+						lie_coal[2] = stolen
+					end
+					proposed_coal[liar_pos] = lie_coal
+				end
+			end
 
 			new_coal = ADMM_coal_update_solve(coal_cache, lambdas, proposed_coal, c)
 			if !any(isnan,new_coal)

@@ -110,7 +110,7 @@ function per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, n_steps)
         sell_price = hcat(repeat(opt.energy_sale, n_steps÷96), opt.energy_sale[1:(n_steps%96)])'
     end
     internal_price = (buy_cost + sell_price) / 2
-    return vec(buy_cost' * buy_mat - sell_price' * sell_mat + internal_price' * coal_exch_mat)
+    return vec(buy_cost' * buy_mat - sell_price' * sell_mat - internal_price' * coal_exch_mat)
 end
 
 # ---------- Decentralised baselines ----------

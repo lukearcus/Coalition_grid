@@ -385,7 +385,8 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                     outs[i] = (res[1], res[2])
                 end
             else
-                res = single_optimise_ADMM(opt, buildings[[agent...]], k, num_look_ahead, receding_horizon)
+                coal_liar_id = (liar_idx !== nothing && lie_level != "truthful" && liar_idx in agent) ? liar_idx : nothing
+                res = single_optimise_ADMM(opt, buildings[[agent...]], k, num_look_ahead, receding_horizon, coal_liar_id, lie_level)
                 outs[i] = (res[1], res[2])
             end
         end
@@ -575,7 +576,8 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         elseif agent isa Int && haskey(singleton_cache, agent)
             vars[i] = singleton_cache[agent][1]
         else
-            res = single_optimise_ADMM(opt, buildings[agent], k, num_look_ahead, receding_horizon)
+            coal_liar_id = (liar_idx !== nothing && lie_level != "truthful" && liar_idx in agent_ids(agent)) ? liar_idx : nothing
+            res = single_optimise_ADMM(opt, buildings[agent], k, num_look_ahead, receding_horizon, coal_liar_id, lie_level)
             num_iters += res[2]
             cv = vec(sum(value(res[1][2]-res[1][3]), dims=2))
             singleton_cache[agent] = (res[1], cv)
