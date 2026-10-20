@@ -495,6 +495,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
+	coal_exch_mat = zeros(num_steps,num_builds)
 	num_iters = 0
 	old_coal = 0
 	stab_score = []
@@ -526,14 +527,16 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 						b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
 					end
 					# println(b.SoC)
-					remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
-					isnan(remaining) && (remaining = 0.0)
-					if remaining > 0
-						sell[k,b.id] = remaining
-					else
-						buy[k,b.id]=-remaining
-					end
-					# println(remaining)
+				ce = value(res[6][1,i])
+				coal_exch_mat[k,b.id] = isnan(ce) ? 0.0 : ce
+				remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
+				isnan(remaining) && (remaining = 0.0)
+				if remaining > 0
+					sell[k,b.id] = remaining
+				else
+					buy[k,b.id]=-remaining
+				end
+				# println(remaining)
 				end
 			else
 				b = agent
@@ -541,15 +544,17 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 					next_soc = value(res[4][2,1])
 					b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
 				end
-				remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,1]) + value(res[1][1,1]))
-				isnan(remaining) && (remaining = 0.0)
-				if remaining > 0
-					sell[k,b.id] = remaining
-				else
-					buy[k,b.id]=-remaining
-				end
+			ce = value(res[6][1,1])
+			coal_exch_mat[k,b.id] = isnan(ce) ? 0.0 : ce
+			remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,1]) + value(res[1][1,1]))
+			isnan(remaining) && (remaining = 0.0)
+			if remaining > 0
+				sell[k,b.id] = remaining
+			else
+				buy[k,b.id]=-remaining
 			end
 		end
+	end
 	end
 	if num_steps <= 96
 		buy_cost = opt.energy_cost[1:num_steps]
@@ -559,5 +564,5 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 		sell_price = hcat(repeat(opt.energy_sale,num_steps÷96), opt.energy_sale[1:(num_steps%96)])'
 	end
 	cost = sum(buy_cost'*buy-sell_price'*sell)
-	return cost, [buy, sell], num_iters/num_steps, stab_score
+	return cost, [buy, sell, coal_exch_mat], num_iters/num_steps, stab_score
 end

@@ -2,16 +2,23 @@
 # Lying-agent experiment: how does a strategic liar degrade honest agents'
 # costs across delta_G values and lie levels?
 #
-# Designated liar (agent 1) fabricates its predicted consumption (pred_cons) to
-# always appear as the perfect complement to the biggest seller in the pool,
-# manipulating coalition formation to secure favourable internal trades.
+# The liar (agent 1) overrides its reported net demand signal (cons_vec) inside
+# coalition formation to always appear as the exact opposite of the agent with
+# the most available energy (SoC + pred_prod - pred_cons) at the current
+# timestep. The target can change between MPC timesteps, causing the liar's
+# reported trades to shift wildly.
+#
 # Three lie levels:
 #   truthful    — no lie (control, matches sweep_delta_G_subset numbers)
 #   bounded     — shift toward fabrication target, clipped to ±LIE_BOUND
-#   fabrication — claim exact opposite net demand of biggest seller each step
+#   fabrication — claim exact opposite net demand of target for entire horizon
 #
-# The liar's act_cons/act_prod/battery params stay truthful, so realised costs
-# reflect reality while coalition/trade decisions are biased by the lie.
+# The liar's actual optimisation data (pred_cons, pred_prod, SoC, battery
+# params) stays truthful, so realised grid trades reflect reality while
+# coalition formation is biased by the lie.
+#
+# Internal coalition trades are priced at the midpoint between grid buy and
+# sell prices, making the liar's gain and honest agents' loss explicit.
 #
 # ============ Configuration (edit here or set via ENV vars) ============
 #   NUM_REPEATS    (default 5)
@@ -92,46 +99,9 @@ end
 
 basin_of(benefit) = benefit < BASIN_NONE ? "A_none" : benefit < BASIN_LOCAL ? "B_local" : "C_global"
 
-# Replace buildings[liar_idx] with a lying version. Returns clip_fraction.
-function make_liar!(buildings::Vector{MPC_Building}, liar_idx::Int, lie_level::String, bound::Float64)
-    lie_level == "truthful" && return 0.0
-
-    liar = buildings[liar_idx]
-    truth_nd = liar.pred_cons .- liar.pred_prod
-
-    # Most negative net demand across other agents at each (k, h)
-    other_nd = [buildings[j].pred_cons .- buildings[j].pred_prod
-                for j in 1:length(buildings) if j != liar_idx]
-    min_nd = reduce((a, b) -> min.(a, b), other_nd)
-
-    # Fabrication: exact opposite of the biggest seller
-    fab_nd = .-min_nd
-
-    clip_fraction = 0.0
-    if lie_level == "fabrication"
-        lie_nd = fab_nd
-    elseif lie_level == "bounded"
-        shift = fab_nd .- truth_nd
-        active = abs.(shift) .> bound
-        clip_fraction = sum(active) / length(active)
-        lie_nd = truth_nd .+ clamp.(shift, -bound, bound)
-    else
-        error("Unknown lie_level: $lie_level")
-    end
-
-    lie_pred_cons = liar.pred_prod .+ lie_nd
-
-    buildings[liar_idx] = MPC_Building(
-        liar.loc, lie_pred_cons, liar.pred_prod,
-        liar.act_cons, liar.act_prod,
-        liar.max_storage, liar.storage_max_flow, liar.charge_eff, liar.discharge_eff,
-        liar.id, copy(liar.SoC))
-
-    return clip_fraction
-end
-
-# Per-agent cost from the buy/sell matrices returned by coal_MPC.
-function per_agent_costs(buy_mat, sell_mat, opt, n_steps)
+# Per-agent cost from buy/sell/coal_exch matrices returned by coal_MPC.
+# Internal coalition trades are priced at the midpoint of grid buy and sell.
+function per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, n_steps)
     if n_steps <= 96
         buy_cost = opt.energy_cost[1:n_steps]
         sell_price = opt.energy_sale[1:n_steps]
@@ -139,7 +109,8 @@ function per_agent_costs(buy_mat, sell_mat, opt, n_steps)
         buy_cost = hcat(repeat(opt.energy_cost, n_steps÷96), opt.energy_cost[1:(n_steps%96)])'
         sell_price = hcat(repeat(opt.energy_sale, n_steps÷96), opt.energy_sale[1:(n_steps%96)])'
     end
-    return vec(buy_cost' * buy_mat - sell_price' * sell_mat)
+    internal_price = (buy_cost + sell_price) / 2
+    return vec(buy_cost' * buy_mat - sell_price' * sell_mat + internal_price' * coal_exch_mat)
 end
 
 # ---------- Decentralised baselines ----------
@@ -160,7 +131,7 @@ end
 data = DataFrame(window=String[], delta_G=Float64[], lie_level=String[], repeat=Int[],
                  honest_avg_cost=Float64[], liar_cost=Float64[], total_avg_cost=Float64[],
                  num_iters=Float64[], time=Float64[], benefit_vs_dec=Float64[],
-                 basin=String[], clip_fraction=Float64[])
+                 basin=String[])
 
 total_runs = length(WINDOWS) * length(delta_G_values) * length(LIE_LEVELS) * num_repeats
 t_start = time()
@@ -175,21 +146,21 @@ for (wname, s, dens) in WINDOWS
                     Random.seed!(repeat)
 
                     bwin = slice_window(all_buildings_full, SUBSET_IDS, s, N_STEPS)
-                    clip_frac = make_liar!(bwin, LIAR_IDX, lie_level, LIE_BOUND)
                     for b in bwin
                         fill!(b.SoC, 0.0)
                     end
                     t1 = time()
 
                     res, trades, num_iters = coal_MPC((buildings, mcs, k, na, rh) ->
-                        privacy_focussed_coals_with_delta(buildings, mcs, k, na, rh, delta_G),
+                        privacy_focussed_coals_with_delta(buildings, mcs, k, na, rh, delta_G,
+                                                          LIAR_IDX, lie_level, LIE_BOUND),
                         bwin, max_coal_size, num_ahead)
 
                     t2 = time()
                     runtime = t2 - t1
 
-                    buy_mat, sell_mat = trades
-                    pac = per_agent_costs(buy_mat, sell_mat, opt, N_STEPS)
+                    buy_mat, sell_mat, coal_exch_mat = trades
+                    pac = per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, N_STEPS)
                     honest_avg = mean(pac[2:end])
                     liar_cost = pac[1]
                     total_avg = res / num_builds
@@ -197,13 +168,13 @@ for (wname, s, dens) in WINDOWS
 
                     push!(data, [wname, delta_G, lie_level, repeat,
                                 honest_avg, liar_cost, total_avg,
-                                num_iters, runtime, benefit, basin_of(benefit), clip_frac])
+                                num_iters, runtime, benefit, basin_of(benefit)])
                     CSV.write(OUT_CSV, data)
 
                     done_runs += 1
                     elapsed = time() - t_start
                     eta = done_runs > 1 ? elapsed / done_runs * (total_runs - done_runs) : 0.0
-                    println("  [$wname] dg=$delta_G lie=$lie_level rep=$repeat honest=$(round(honest_avg, digits=1)) liar=$(round(liar_cost, digits=1)) total=$(round(total_avg, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) clip=$(round(clip_frac, digits=2)) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
+                    println("  [$wname] dg=$delta_G lie=$lie_level rep=$repeat honest=$(round(honest_avg, digits=1)) liar=$(round(liar_cost, digits=1)) total=$(round(total_avg, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
                 catch e
                     println("  FAILED [$wname] dg=$delta_G lie=$lie_level rep=$repeat: $(typeof(e)): $e")
                 end
@@ -223,6 +194,7 @@ open(OUT_SUM, "w") do io
     println(io, "liar_idx = $LIAR_IDX (building $(SUBSET_IDS[LIAR_IDX]))")
     println(io, "lie_levels = $(LIE_LEVELS)")
     println(io, "lie_bound = $LIE_BOUND")
+    println(io, "internal_trade_price = midpoint of (grid_buy, grid_sell)")
     println(io, "num_repeats = $num_repeats")
     println(io, "delta_G_values = $(delta_G_values)")
     println(io, "windows = $([w[1] for w in WINDOWS])")
@@ -238,11 +210,10 @@ open(OUT_SUM, "w") do io
                          :honest_avg_cost => std  => :std_honest,
                          :liar_cost       => mean => :mean_liar,
                          :total_avg_cost  => mean => :mean_total,
-                         :clip_fraction   => mean => :mean_clip,
                          nrow => :n_runs)
             println(io, "\n  lie_level = $ll")
             for r in eachrow(gdf)
-                println(io, "    dg=$(r.delta_G)  honest=$(round(r.mean_honest, digits=2))±$(round(r.std_honest, digits=2))  liar=$(round(r.mean_liar, digits=2))  total=$(round(r.mean_total, digits=2))  clip=$(round(r.mean_clip, digits=3))  n=$(r.n_runs)")
+                println(io, "    dg=$(r.delta_G)  honest=$(round(r.mean_honest, digits=2))±$(round(r.std_honest, digits=2))  liar=$(round(r.mean_liar, digits=2))  total=$(round(r.mean_total, digits=2))  n=$(r.n_runs)")
             end
         end
         # Degradation table: honest cost relative to truthful

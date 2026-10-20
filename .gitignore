@@ -33,3 +33,6 @@ JuliaLocalPreferences.toml
 *.o*
 *.e*
 *.pbs
+
+# Group-meeting slides (self-contained, gitignored)
+talk/

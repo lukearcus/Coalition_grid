@@ -90,6 +90,46 @@ end
 savefig(p2, joinpath(@__DIR__, "results", "lying_agent_degradation.pdf"))
 println("Saved results/lying_agent_degradation.pdf")
 
+# --- Plot 4: liar's benefit vs delta_G ---
+# liar_benefit = liar_cost_truthful - liar_cost_lie (positive = deception pays off)
+truthful_liar = select(truthful[:, [:window, :delta_G, :repeat, :truthful_cost]], :)
+
+p4 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Liar's benefit (cost truth - cost lie)",
+          title="Is Deception Worth It? (Liar's Benefit)", legend=:topright)
+
+for ll in ["bounded", "fabrication"]
+    ll_df = filter(:lie_level => ==(ll), df)
+    isempty(ll_df) && continue
+    ll_sel = select(ll_df, [:window, :delta_G, :repeat, :liar_cost => :lie_cost])
+    benefit = innerjoin(truthful_liar, ll_sel, on=[:window, :delta_G, :repeat])
+    benefit.liar_benefit = benefit.truthful_cost .- benefit.lie_cost
+
+    benefit_log = filter(:delta_G => x -> x > 0, benefit)
+    isempty(benefit_log) && continue
+    gdf = combine(groupby(benefit_log, :delta_G),
+                  :liar_benefit => mean => :mean_benefit,
+                  :liar_benefit => std  => :std_benefit)
+    sort!(gdf, :delta_G)
+    xs = gdf[:, :delta_G]
+    ms = gdf[:, :mean_benefit]
+    ss = gdf[:, :std_benefit]
+    lower = [isnothing(s) || isnan(s) ? m : m - s for (m, s) in zip(ms, ss)]
+    upper = [isnothing(s) || isnan(s) ? m : m + s for (m, s) in zip(ms, ss)]
+    plot!(p4, xs, ms, seriestype=:line, linewidth=2, color=LIE_COLORS[ll], label=LIE_LABELS[ll])
+    plot!(p4, xs, lower, fillrange=upper, seriestype=:path, color=LIE_COLORS[ll], alpha=0.15, lw=0, label=nothing)
+    scatter!(p4, benefit_log[:, :delta_G], benefit_log[:, :liar_benefit], color=LIE_COLORS[ll], alpha=0.2, ms=2, label=nothing)
+end
+
+# Zero baseline: positive = liar gains, negative = liar hurts itself
+if !isempty(df_log)
+    xmin = minimum(df_log[:, :delta_G])
+    xmax = maximum(df_log[:, :delta_G])
+    plot!(p4, [xmin, xmax], [0, 0], seriestype=:line, color=:black, linestyle=:dash, linewidth=1, label=nothing)
+end
+
+savefig(p4, joinpath(@__DIR__, "results", "lying_agent_liar_benefit.pdf"))
+println("Saved results/lying_agent_liar_benefit.pdf")
+
 # --- Plot 3: liar's own cost (for context) ---
 p3 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Liar's cost",
           title="Liar's Own Cost vs delta_G", legend=:topright)
@@ -124,7 +164,7 @@ end
 savefig(p3, joinpath(@__DIR__, "results", "lying_agent_liar_cost.pdf"))
 println("Saved results/lying_agent_liar_cost.pdf")
 
-# --- Combined plot ---
-plot(p1, p2, p3, layout=(1, 3), size=(1800, 500))
+# --- Combined plot: p1 (honest cost), p2 (honest degradation), p4 (liar benefit), p3 (liar absolute cost) ---
+plot(p1, p2, p4, p3, layout=(2, 2), size=(1400, 1000))
 savefig(joinpath(@__DIR__, "results", "lying_agent_analysis.pdf"))
 println("Saved results/lying_agent_analysis.pdf")

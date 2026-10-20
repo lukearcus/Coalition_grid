@@ -6,7 +6,7 @@ catch
 end
 
 # Read the CSV file
-df = CSV.read(joinpath(@__DIR__, "results", "sweep_delta_G_subset.csv"), DataFrame)
+df = CSV.read(joinpath(@__DIR__, "results", "sweep_delta_G_synthetic.csv"), DataFrame)
 
 # Set plotting backend
 gr()
@@ -119,6 +119,6 @@ p4 = sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, :num_iters, "ite
 
 # Combine plots
 plot(p1, p2, p3, p4, layout=(2, 2), size=(1100, 850))
-savefig(joinpath(@__DIR__, "results", "sweep_analysis_julia.pdf"))
+savefig(joinpath(@__DIR__, "results", "sweep_analysis_julia_synthetic.pdf"))
 
 println("Plots saved to results/ directory")

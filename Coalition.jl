@@ -152,7 +152,7 @@ function privacy_focussed_coals(buildings::Vector{Building}, max_coal_size::Int)
         for c in poss_coals
             compatible_slots = cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]]))
             if any(compatible_slots)
-                poss_coal_vals[c] = energy_diff*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
+                poss_coal_vals[c] = energy_diff*(min.(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]]))) # should be dotted with price vector
                 #poss_coal_vals[c] = norm(cons_vec[c[1]]+cons_vec[c[2]])
             end
         end
@@ -332,7 +332,7 @@ reproducibility.
 
 Returns `(agents, vars, num_iters)`.
 """
-function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0)
+function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0, liar_idx::Union{Int, Nothing}=nothing, lie_level::String="truthful", lie_bound::Float64=0.0)
     agents = Vector(1:length(buildings))
     done = false
     energy_diff = opt.energy_cost-opt.energy_sale
@@ -346,6 +346,19 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     singleton_cache = Dict{Int, Tuple{Any, Vector{Float64}}}()
     cache_lock = SpinLock()
     round_num = 0
+    liar_target_idx = nothing
+    liar_target_cv = nothing
+    if liar_idx !== nothing && lie_level != "truthful"
+        target_score = -Inf
+        for j in 1:length(buildings)
+            j == liar_idx && continue
+            score = buildings[j].SoC[k] + buildings[j].pred_prod[k, 1] - buildings[j].pred_cons[k, 1]
+            if score > target_score
+                target_score = score
+                liar_target_idx = j
+            end
+        end
+    end
     while !done
         round_num += 1
         done = true
@@ -389,6 +402,27 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                 # bad coalition solve doesn't poison the next round's poss_coal_vals/softmax.
                 cv = vec(sum(value(var[2]-var[3]), dims=2))
                 cons_vec[agent] = [isnan(x) ? 0.0 : x for x in cv]
+            end
+        end
+
+        if liar_idx !== nothing && lie_level != "truthful" && liar_idx in agents
+            if liar_target_cv === nothing && liar_target_idx !== nothing && haskey(cons_vec, liar_target_idx)
+                liar_target_cv = copy(cons_vec[liar_target_idx])
+            end
+            if liar_target_cv !== nothing && haskey(cons_vec, liar_idx)
+                truth_cv = cons_vec[liar_idx]
+                if lie_level == "fabrication"
+                    lied_cv = .-liar_target_cv
+                elseif lie_level == "bounded"
+                    shift = .-liar_target_cv .- truth_cv
+                    lied_cv = truth_cv .+ clamp.(shift, -lie_bound, lie_bound)
+                else
+                    lied_cv = truth_cv
+                end
+                cons_vec[liar_idx] = lied_cv
+                if haskey(singleton_cache, liar_idx)
+                    singleton_cache[liar_idx] = (singleton_cache[liar_idx][1], lied_cv)
+                end
             end
         end
 
@@ -615,13 +649,14 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
             num_look_ahead = min(length(buildings[1].act_cons)-k+1, num_look_ahead)
             compatible_slots = (cons_vec[c[1]].*cons_vec[c[2]] .< zeros(length(cons_vec[c[1]])))[1:num_look_ahead]
             if any(compatible_slots)
-                poss_coal_vals[c] = energy_diff[1:num_look_ahead]'*(min(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]])))
+                poss_coal_vals[c] = energy_diff[1:num_look_ahead]'*(min.(abs.(compatible_slots.*cons_vec[c[1]]),abs.(compatible_slots.*cons_vec[c[2]])))
             end
         end
-        sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
+        sorted_coal_vals = sort!(collect(poss_coal_vals), by=last, rev=true)
         new_agents = Vector()
         coaled_agents = Vector()
         for elem in sorted_coal_vals
+            last(elem) > 0 || continue
             if !(elem[1][1] in coaled_agents) && !(elem[1][2] in coaled_agents)
                 new_coal = Vector()
                 append!(new_coal, elem[1][1], elem[1][2])
@@ -643,15 +678,12 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
     pre_split_agents = agents
     pre_split_vars = vars
     new_agents = Vector()
-    added = false
     for (agent, var) in zip(agents,vars)
-        added = false
         if length(agent) > 1
             dec_val = sum(sum(dec_single_vals[i] for i in agent))
             coal_single_val = sum(value(var[2][1,:]).*energy_cost_k(opt,k,1)-value(var[3][1,:]).*energy_sale_k(opt,k,1))
             if dec_val >= coal_single_val
                 push!(new_agents, agent)
-                added = true
             else
                 for i in agent
                     push!(new_agents, i)
@@ -661,9 +693,7 @@ function privacy_focussed_coals(buildings::Vector{MPC_Building}, max_coal_size::
             push!(new_agents,agent)
         end
     end
-    if added
-        agents = new_agents
-    end
+    agents = new_agents
     vars_by_agent = Dict{Any, Any}(zip(pre_split_agents, pre_split_vars))
     vars = Vector{Any}(undef, length(agents))
     for (i, agent) in enumerate(agents)
