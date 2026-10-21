@@ -283,7 +283,7 @@ function solve_inverse_optimality(
     @constraint(model, dyn_c[t=2:h],
         charge[t] == charge[t-1] + η_ch * pos_δ[t-1] + (1/η_dis) * neg_δ[t-1])
     if known_battery
-        @constraint(model, pos_cap[t=1:h], pos_δ[t] <= Q_b_val)
+        @constraint(model, pos_cap[t=1:h], pos_δ[t] <= P_b_val)
         @constraint(model, neg_cap[t=1:h], -neg_δ[t] <= P_b_val)
         @constraint(model, charge_cap[t=1:h], charge[t] <= Q_b_val)
     else
