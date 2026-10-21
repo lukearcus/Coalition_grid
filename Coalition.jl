@@ -416,7 +416,11 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
                     lied_cv = .-liar_target_cv
                 elseif lie_level == "bounded"
                     shift = .-liar_target_cv .- truth_cv
-                    lied_cv = truth_cv .+ clamp.(shift, -lie_bound, lie_bound)
+                    l1 = sum(abs.(shift))
+                    if l1 > lie_bound
+                        shift = shift .* (lie_bound / l1)
+                    end
+                    lied_cv = truth_cv .+ shift
                 else
                     lied_cv = truth_cv
                 end

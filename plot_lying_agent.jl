@@ -52,7 +52,7 @@ println("Saved results/lying_agent_costs.pdf")
 # --- Plot 2: degradation vs delta_G ---
 # Degradation = honest_avg_cost[lie] - honest_avg_cost[truthful], paired by (window, delta_G, repeat)
 truthful = filter(:lie_level => ==("truthful"), df)
-truthful = select(truthful, [:window, :delta_G, :repeat, :honest_avg_cost => :truthful_cost])
+truthful = Cols(truthful, [:window, :delta_G, :repeat, :honest_avg_cost => :truthful_cost])
 
 p2 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Cost degradation (honest agents)",
           title="Degradation vs delta_G", legend=:topright)
