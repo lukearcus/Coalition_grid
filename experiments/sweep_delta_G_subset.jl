@@ -59,7 +59,7 @@ include("../load_EMS_data.jl")
 # (industrial 24/7, data center 24/7, residential AM/PM peaks).
 const SUBSET_IDS = [1, 10, 16, 25, 28, 7]
 const num_builds = length(SUBSET_IDS)
-const max_coal_size = 6
+const max_coal_size = 2
 const num_ahead = 8
 const receding_horizon = false
 const N_STEPS = 96
