@@ -50,7 +50,7 @@ include("../load_EMS_data.jl")
 # ---------- Configuration ----------
 const SUBSET_IDS = [62, 28, 70, 37, 18, 40]
 const num_builds = length(SUBSET_IDS)
-const max_coal_size = 6
+const max_coal_size = 2
 const num_ahead = 8
 const receding_horizon = false
 const N_STEPS = 96
@@ -64,7 +64,7 @@ const LIE_LEVELS = ["truthful", "bounded", "fabrication"]
 const LIAR_IDX = 1
 
 # Bound for the bounded lie: half the total swept delta_G range (fixed).
-const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 10
+const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 100
 
 const WINDOWS = [
     ("day37_best", 3553, 0.254),
