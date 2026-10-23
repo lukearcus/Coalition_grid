@@ -152,23 +152,49 @@ $\SoC$ & 0 & 0 & 0.07 & 0.07 & \multicolumn{3}{c}{(known)} \\
 Key observations:
 \begin{itemize}[nosep]
     \item \emph{$\netload$ is tightly observable when the battery hits limits.} At $t=14$--$16$, the battery is empty (final constraint active), so $\deltas \approx 0$ and $\netload \approx z^*$. The ratio drops to $\sim 0.2$.
-    \item \emph{During active arbitrage, $\netload$ is wide.} At $t=1$--$8$, the battery charges/discharges, and $\deltas$ is a free variable (within box constraints). The ratio is $\sim 9$.
+    \item \emph{During active arbitrage, $\netload$ is wide.} At $t=1$--$8$, the battery charges/discharges, and $\deltas$ is an unobserved variable bounded by $\pm\Pb$. With unknown battery parameters, the strong duality constraint adds no information (the free $\Qb, \Pb$ absorb any discrepancy), so the bounds saturate the prior range. The ratio is $\sim 9$--$18$ depending on timestep.
     \item \emph{$\Qb$ and $\Pb$ are unobservable.} Their bounds span the full prior range. The battery's capacity and power rating are never directly revealed by the grid trade---only their \emph{effect} (via the feasible $\deltas$ trajectory) is visible.
-    \item \emph{Knowing the battery helps.} With known $\Qb, \Pb, \SoC$, the mean $\netload$ ratio drops from 11.1 to 3.0 (\cref{fig:cross_building}).
+    \item \emph{Knowing the battery parameters constrains the width to $\Pb$.} With known $\Qb, \Pb, \SoC$, the sole source of ambiguity is $\deltas \in [-\Pb, +\Pb]$, giving a bound width of $\sim 2\Pb$ and a ratio of $\sim 5.4$ for building~1. See \cref{sec:cross_building} for the cross-building comparison.
 \end{itemize}
 
-\subsection{Cross-Building Comparison}
+\subsection{Cross-Building Comparison}\label{sec:cross_building}
 
-\Cref{fig:cross_building} compares observability across buildings with different battery sizes.
+\Cref{fig:cross_building} compares observability across three buildings with different battery sizes. The observability ratio~\eqref{eq:ratio} normalises the bound width by $|\netload^{\text{true}}|$, which varies significantly across buildings (building~3: mean $|\netload| = 8.2$; building~4: $96.5$). To disentangle the normalisation effect from the actual observability, \cref{tab:cross_absolute} reports both the ratio and the absolute bound width.
+
+\begin{table}[ht]
+\centering
+\caption{Cross-building observability ($h=16$, optimality variant). ``Width'' is the mean absolute bound $\theta^{\max}-\theta^{\min}$ on $\netload$ (kW).}
+\label{tab:cross_absolute}
+\small
+\begin{tabular}{r rr r rr rr}
+\toprule
+& \multicolumn{3}{c}{Building} & \multicolumn{2}{c}{Battery unknown} & \multicolumn{2}{c}{Battery known} \\
+Bldg & $\Qb$ & $\Pb$ & mean\,$|\netload|$ & Width & Ratio & Width & Ratio \\
+\midrule
+1 & 300 & 75.0 & 38.3 & 407 & 11.1 & 57 & 1.6 \\
+3 & 50  & 12.5 & 8.2  & 500 & 67.2 & 12 & 1.6 \\
+4 & 500 & 125.0 & 96.5 & 501 & 5.5  & 118 & 1.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{figs/cross_building.pdf}
-    \caption{Mean $\netload$ observability ratio for three buildings with different battery sizes. Building~3 ($\Qb=50$, small battery) is hardest to observe; building~4 ($\Qb=500$, large battery) is easiest. Knowing the battery parameters (dashed) roughly halves the ratio for all buildings.}
+    \caption{Mean $\netload$ observability ratio for three buildings. The ratio differences across buildings are primarily a normalisation artefact: the absolute bound widths tell a different story (see \cref{tab:cross_absolute}).}
     \label{fig:cross_building}
 \end{figure}
 
-The counterintuitive result that larger batteries \emph{improve} observability arises because large batteries hit their capacity limits more often, creating binding constraints that pin $\deltas$ and hence $\netload$.
+Two distinct regimes are visible in the absolute widths:
+
+\paragraph{Unknown battery: bounds saturate the prior.}
+With unknown $\Qb$ and $\Pb$, the bound widths are $\sim 500$ for all three buildings---matching the prior range ($\pm\text{NL\_MAX}$). The strong duality constraint provides essentially no information because the free variables $Q_b$ and $P_b$ absorb any discrepancy in $\netload$. Building~1 is slightly narrower (407) only because the final constraint is active at $t=14$--$16$ (battery empties), pinning $\deltas \approx 0$ at those timesteps. There is \emph{no} systematic dependence on battery size: the active constraint set is determined by the tariff structure, not the battery capacity. (The capacity dual $\sigma$ is active at exactly one timestep for all three buildings, with identical magnitude.) The ratio differences (5.5 vs.\ 67.2) are purely an artefact of dividing by $|\netload|$, which varies by an order of magnitude across buildings.
+
+\paragraph{Known battery: width is set by $\Pb$.}
+With known $\Qb$ and $\Pb$, the bound width is approximately $\Pb$ for each building (building~3: $12 \approx \Pb$; building~1: $57 \approx 0.76\,\Pb$; building~4: $118 \approx 0.94\,\Pb$). This is expected: with the battery parameters fixed, the sole source of ambiguity is the battery action $\deltas \in [-\Pb, +\Pb]$, giving $\netload \in [z^* - \Pb,\ z^* + \Pb]$. The ratio is nearly constant ($1.3$--$1.6$) across buildings because both the numerator (width $\propto \Pb$) and denominator ($|\netload| \propto \Pb$, since $\Pb = \text{max\_load}/4$ for all buildings in the dataset) scale with building size.
+
+\paragraph{Implication for cross-building comparison.}
+The observability ratio is meaningful for comparing observation models (e.g., Model~A vs.\ Model~B) within a single building, but \emph{not} for comparing observability across buildings with different $\netload$ magnitudes. Absolute bound widths should be used for the latter.
 
 \subsection{Horizon Sensitivity}
 
@@ -332,9 +358,9 @@ This confirms the fundamental gap identified above: the $\delta_G$ parameter tra
 We have shown that an adversary observing the broadcast grid trades and coalition exchanges can reconstruct the set of private parameters consistent with the observed behaviour, formulated as a linear program derived from the KKT conditions. The key findings are:
 
 \begin{enumerate}[nosep]
-    \item Net load is partially observable from grid trades alone (ratio $\sim 9$ with unknown battery, $\sim 3$--$5$ with known battery), with the battery creating significant ambiguity during active arbitrage.
-    \item Battery parameters ($\Qb, \Pb$) are essentially unobservable from grid trades alone.
-    \item Coalition participation \emph{increases} observability (ratio drops from $\sim 3$ to $\sim 1.3$--$1.6$) because the coalition exchange $\ce^*$ reveals additional structural information.
+    \item Net load is partially observable from grid trades alone, with the observability ratio depending on whether the battery parameters are known. With unknown battery, the bounds saturate the prior range ($\sim 500$\,kW width) for all buildings; the ratio varies from 5.5 to 67.2 purely due to differences in $|\netload|$ magnitude. With known battery, the bound width is approximately $\Pb$ (the battery power rating), giving a ratio of $\sim 1.3$--$1.6$ across all buildings.
+    \item Battery parameters ($\Qb, \Pb$) are essentially unobservable from grid trades alone---their bounds span the full prior range, and active constraints with unknown battery duals actually reduce observability rather than improving it.
+    \item Coalition participation \emph{increases} observability (ratio drops from $\sim 1.3$--$1.6$ to $\sim 1.3$ with Model~B) because the coalition exchange $\ce^*$ reveals additional structural information.
     \item The existing DP mechanism protects the coalition structure but not the private data revealed through the ADMM broadcasts. The $\delta_G$ parameter has no effect on the observability of private parameters.
 \end{enumerate}
 
