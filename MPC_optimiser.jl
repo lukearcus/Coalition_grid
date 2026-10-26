@@ -382,11 +382,11 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 					# Spare energy across partners (only what they can actually spare)
 					surplus = sum(max(0.0, bs[j].pred_prod[k,1] + bs[j].SoC[k] - bs[j].pred_cons[k,1])
 					              for j in 1:num_builds if j != liar_pos)
-					# Steal only the useful amount
+					# Steal only the useful amount. Once a coalition has formed, the
+					# liar steals as much as it can usefully consume, regardless of
+					# lie_level - the bounded constraint applies only to the
+					# singleton-phase cons_vec lie that influenced coalition selection.
 					stolen = min(liar_need, surplus)
-					if lie_level == "bounded"
-						stolen = min(stolen, lie_bound / 2)
-					end
 					lie_coal = zeros(num_steps)
 					lie_coal[1] = -stolen
 					if num_steps >= 2
