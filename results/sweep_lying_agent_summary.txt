@@ -2,7 +2,7 @@ sweep_lying_agent summary
 subset_ids = [62, 28, 70, 37, 18, 40]
 liar_idx = 1 (building 62)
 lie_levels = ["truthful", "bounded", "fabrication"]
-lie_bound = 10.0
+lie_bound = 500.0
 internal_trade_price = midpoint of (grid_buy, grid_sell)
 num_repeats = 4
 delta_G_values = [0.0, 0.1, 1.0, 10.0, 100.0, 1000.0]
@@ -20,33 +20,33 @@ dec_avg = Dict("day37_best" => -6977.845198694565)
     dg=1000.0  honest=-228.49±0.42  liar=-40731.59  total=-6979.01  n=4
 
   lie_level = bounded
-    dg=0.0  honest=-166.14±0.0  liar=-40535.41  total=-6894.35  n=4
-    dg=0.1  honest=-166.74±0.67  liar=-40501.67  total=-6889.23  n=4
-    dg=1.0  honest=-165.52±1.68  liar=-40508.5  total=-6889.35  n=4
-    dg=10.0  honest=-180.41±30.48  liar=-40435.92  total=-6889.66  n=4
-    dg=100.0  honest=-273.75±39.53  liar=-40006.61  total=-6895.89  n=4
-    dg=1000.0  honest=-369.77±21.31  liar=-39542.62  total=-6898.57  n=4
+    dg=0.0  honest=-236.55±0.0  liar=-40732.48  total=-6985.87  n=4
+    dg=0.1  honest=-236.64±0.31  liar=-40732.49  total=-6985.95  n=4
+    dg=1.0  honest=-236.67±0.14  liar=-40732.51  total=-6985.97  n=4
+    dg=10.0  honest=-236.38±0.59  liar=-40732.5  total=-6985.74  n=4
+    dg=100.0  honest=-228.26±0.33  liar=-40732.6  total=-6978.98  n=4
+    dg=1000.0  honest=-228.11±0.8  liar=-40731.25  total=-6978.63  n=4
 
   lie_level = fabrication
-    dg=0.0  honest=-954.45±0.0  liar=-36742.89  total=-6919.19  n=4
-    dg=0.1  honest=-952.99±3.02  liar=-36785.08  total=-6925.0  n=4
-    dg=1.0  honest=-951.31±1.83  liar=-36761.17  total=-6919.62  n=4
-    dg=10.0  honest=-982.07±59.75  liar=-36775.87  total=-6947.71  n=4
-    dg=100.0  honest=-945.95±5.01  liar=-36776.04  total=-6917.63  n=4
-    dg=1000.0  honest=-936.97±126.36  liar=-37193.23  total=-6979.68  n=4
+    dg=0.0  honest=-227.06±0.0  liar=-40733.12  total=-6978.07  n=4
+    dg=0.1  honest=-229.03±4.21  liar=-40731.54  total=-6979.45  n=4
+    dg=1.0  honest=-232.65±11.48  liar=-40731.73  total=-6982.5  n=4
+    dg=10.0  honest=-232.77±11.83  liar=-40731.69  total=-6982.59  n=4
+    dg=100.0  honest=-227.33±0.47  liar=-40731.74  total=-6978.07  n=4
+    dg=1000.0  honest=-230.12±4.46  liar=-40731.08  total=-6980.28  n=4
 
   Degradation (honest_avg_cost - truthful_honest_avg_cost):
     bounded:
-      dg=0.0  degradation=63.16  (27.54%)
-      dg=0.1  degradation=62.23  (27.18%)
-      dg=1.0  degradation=65.37  (28.31%)
-      dg=10.0  degradation=117.9  (39.52%)
-      dg=100.0  degradation=-44.73  (-19.53%)
-      dg=1000.0  degradation=-141.27  (-61.83%)
+      dg=0.0  degradation=-7.25  (-3.16%)
+      dg=0.1  degradation=-7.67  (-3.35%)
+      dg=1.0  degradation=-5.77  (-2.5%)
+      dg=10.0  degradation=61.93  (20.76%)
+      dg=100.0  degradation=0.76  (0.33%)
+      dg=1000.0  degradation=0.38  (0.17%)
     fabrication:
-      dg=0.0  degradation=-725.15  (-316.25%)
-      dg=0.1  degradation=-724.01  (-316.19%)
-      dg=1.0  degradation=-720.42  (-312.01%)
-      dg=10.0  degradation=-683.77  (-229.21%)
-      dg=100.0  degradation=-716.93  (-313.04%)
-      dg=1000.0  degradation=-708.48  (-310.07%)
+      dg=0.0  degradation=2.24  (0.98%)
+      dg=0.1  degradation=-0.05  (-0.02%)
+      dg=1.0  degradation=-1.76  (-0.76%)
+      dg=10.0  degradation=65.54  (21.97%)
+      dg=100.0  degradation=1.69  (0.74%)
+      dg=1000.0  degradation=-1.63  (-0.71%)
