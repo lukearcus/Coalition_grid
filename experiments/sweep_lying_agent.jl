@@ -2,7 +2,7 @@
 # Lying-agent experiment: how does a strategic liar degrade honest agents'
 # costs across delta_G values and lie levels?
 #
-# The liar (agent 1) manipulates TWO phases:
+# The liar manipulates TWO phases:
 #   (1) Coalition formation: overrides its reported cons_vec (net grid demand)
 #       to appear as the exact opposite of the agent with the most spare energy
 #       (SoC + pred_prod - pred_cons) at the current timestep. delta_G controls
@@ -75,10 +75,11 @@ const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "5"))
 const delta_G_values = [0.0; 10 .^ range(-1, 3; length=max(delta_g_points, 2))]
 
 const LIE_LEVELS = ["truthful", "bounded", "fabrication"]
-const LIAR_IDX = 1
+const LIAR_IDX = 4  # building 37 (net consumer: max_load 240, day37 net_demand L1 ~895)
 
-# Bound for the bounded lie: L1 budget for cons_vec shift, and clip scale for
-# the ADMM coalition trade-steal (`stolen` clipped to LIE_BOUND/2, so L1=stolen*2).
+# Bound for the bounded lie: L1 budget for the singleton-phase cons_vec shift.
+# Value (500) sits inside the tested delta_G range [0, 1000] so the bounded lie
+# has a comparable scale to the manipulation delta_G is calibrated against.
 const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 2
 
 const WINDOWS = [
@@ -176,8 +177,9 @@ for (wname, s, dens) in WINDOWS
 
                     buy_mat, sell_mat, coal_exch_mat = trades
                     pac = per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, N_STEPS)
-                    honest_avg = mean(pac[2:end])
-                    liar_cost = pac[1]
+                    honest_idx = [i for i in 1:length(pac) if i != LIAR_IDX]
+                    honest_avg = mean(pac[honest_idx])
+                    liar_cost = pac[LIAR_IDX]
                     total_avg = res / num_builds
                     benefit = dec_avg[wname] - total_avg
 
