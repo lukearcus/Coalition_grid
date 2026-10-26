@@ -2,20 +2,34 @@
 # Lying-agent experiment: how does a strategic liar degrade honest agents'
 # costs across delta_G values and lie levels?
 #
-# The liar (agent 1) overrides its reported net demand signal (cons_vec) inside
-# coalition formation to always appear as the exact opposite of the agent with
-# the most available energy (SoC + pred_prod - pred_cons) at the current
-# timestep. The target can change between MPC timesteps, causing the liar's
-# reported trades to shift wildly.
+# The liar (agent 1) manipulates TWO phases:
+#   (1) Coalition formation: overrides its reported cons_vec (net grid demand)
+#       to appear as the exact opposite of the agent with the most spare energy
+#       (SoC + pred_prod - pred_cons) at the current timestep. delta_G controls
+#       how reliably this manipulation succeeds at pairing the liar with the
+#       high-surplus target.
+#   (2) Coalition trades: once in a coalition, the liar overrides its reported
+#       coal_exch each ADMM iteration to import `stolen = min(liar_need, surplus)`
+#       at the current step, promising to return it next step. The promise is
+#       never realised: coal_MPC re-calls coal_former at k+1, dissolving the
+#       coalition. The liar profits because internal_price = (buy+sell)/2 is
+#       below the buy_price it would otherwise pay for that energy.
+#
+# The trade-stealing magnitude is naturally coupled to delta_G: `surplus`
+# depends on which partner the liar gets paired with (delta_G controls this),
+# and `liar_need` is bounded by the liar's own profile. At high delta_G the
+# liar is less likely to be paired with a high-surplus agent, so its impact
+# shrinks — this is the property that lets the DP mechanism mitigate it.
 #
 # Three lie levels:
-#   truthful    — no lie (control, matches sweep_delta_G_subset numbers)
-#   bounded     — shift toward fabrication target, clipped to ±LIE_BOUND
-#   fabrication — claim exact opposite net demand of target for entire horizon
+#   truthful    — no lie (control)
+#   bounded     — cons_vec shift L1-clipped to LIE_BOUND; ADMM steal clipped
+#                 to LIE_BOUND/2 (L1 = 2*stolen <= LIE_BOUND)
+#   fabrication — no clipping (full lie)
 #
-# The liar's actual optimisation data (pred_cons, pred_prod, SoC, battery
-# params) stays truthful, so realised grid trades reflect reality while
-# coalition formation is biased by the lie.
+# max_coal_size=2 so partner selection actually varies with delta_G; with the
+# grand coalition (max_coal_size=num_builds) the liar would always be paired
+# with everyone, decoupling `surplus` from delta_G.
 #
 # Internal coalition trades are priced at the midpoint between grid buy and
 # sell prices, making the liar's gain and honest agents' loss explicit.
@@ -63,8 +77,9 @@ const delta_G_values = [0.0; 10 .^ range(-1, 3; length=max(delta_g_points, 2))]
 const LIE_LEVELS = ["truthful", "bounded", "fabrication"]
 const LIAR_IDX = 1
 
-# Bound for the bounded lie: half the total swept delta_G range (fixed).
-const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 100
+# Bound for the bounded lie: L1 budget for cons_vec shift, and clip scale for
+# the ADMM coalition trade-steal (`stolen` clipped to LIE_BOUND/2, so L1=stolen*2).
+const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 2
 
 const WINDOWS = [
     ("day37_best", 3553, 0.254),

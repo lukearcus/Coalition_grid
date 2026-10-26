@@ -328,7 +328,7 @@ function ADMM_coal_update_solve(cache::ADMMCoalCache, lambda::Vector{Vector{Floa
 	return value.(cache.coal_exch)
 end
 
-function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false,liar_id::Union{Int,Nothing}=nothing,lie_level::String="truthful")
+function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int,num_look_ahead::Int,receding_horizon::Bool=false,liar_id::Union{Int,Nothing}=nothing,lie_level::String="truthful",lie_bound::Float64=0.0)
 	num_builds = bs.size[1]
 	if num_builds == 1
 		return single_optimise(opt,bs,k,num_look_ahead,receding_horizon)[2], 1
@@ -367,15 +367,26 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 		end
 			proposed_coal = [value(state[6]) for state in states]
 
-			# Liar in coalition: override reported trades to steal partners'
-			# energy at current step, promise to return next step. The
-			# coalition dissolves each k (coal_MPC re-calls coal_former),
-			# so the promise is never realised.
+			# Liar in coalition: steal only what it can usefully consume, from
+			# partners' true surplus. Imports `stolen` at internal_price (midpoint
+			# of buy/sell), displacing grid purchases at buy_price > internal_price.
+			# The promise to return next step is never realised: coal_MPC
+			# re-calls coal_former at k+1, dissolving the coalition.
 			if liar_id !== nothing && lie_level != "truthful"
 				liar_pos = findfirst(b -> b.id == liar_id, bs)
 				if liar_pos !== nothing
-					stolen = sum(bs[j].pred_prod[k,1] + bs[j].SoC[k]
-					             for j in 1:num_builds if j != liar_pos)
+					# What the liar would otherwise buy from the grid at step k
+					liar_need = max(0.0, bs[liar_pos].pred_cons[k,1]
+					                      - bs[liar_pos].pred_prod[k,1]
+					                      - bs[liar_pos].SoC[k])
+					# Spare energy across partners (only what they can actually spare)
+					surplus = sum(max(0.0, bs[j].pred_prod[k,1] + bs[j].SoC[k] - bs[j].pred_cons[k,1])
+					              for j in 1:num_builds if j != liar_pos)
+					# Steal only the useful amount
+					stolen = min(liar_need, surplus)
+					if lie_level == "bounded"
+						stolen = min(stolen, lie_bound / 2)
+					end
 					lie_coal = zeros(num_steps)
 					lie_coal[1] = -stolen
 					if num_steps >= 2
