@@ -69,8 +69,8 @@ const num_ahead = 8
 const receding_horizon = false
 const N_STEPS = 96
 
-const num_repeats    = parse(Int, get(ENV, "NUM_REPEATS", "4"))
-const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "5"))
+const num_repeats    = parse(Int, get(ENV, "NUM_REPEATS", "10"))
+const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "10"))
 
 const delta_G_values = [0.0; 10 .^ range(-1, 3; length=max(delta_g_points, 2))]
 
@@ -80,7 +80,7 @@ const LIAR_IDX = 4  # building 37 (net consumer: max_load 240, day37 net_demand 
 # Bound for the bounded lie: L1 budget for the singleton-phase cons_vec shift.
 # Value (500) sits inside the tested delta_G range [0, 1000] so the bounded lie
 # has a comparable scale to the manipulation delta_G is calibrated against.
-const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 2
+const LIE_BOUND = (maximum(delta_G_values) - minimum(delta_G_values)) / 10
 
 const WINDOWS = [
     ("day37_best", 3553, 0.254),
