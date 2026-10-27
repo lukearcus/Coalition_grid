@@ -52,7 +52,7 @@ println("Saved results/lying_agent_costs.pdf")
 # --- Plot 2: degradation vs delta_G ---
 # Degradation = honest_avg_cost[lie] - honest_avg_cost[truthful], paired by (window, delta_G, repeat)
 truthful = filter(:lie_level => ==("truthful"), df)
-truthful = Cols(truthful, [:window, :delta_G, :repeat, :honest_avg_cost => :truthful_cost])
+truthful = select(truthful, :window, :delta_G, :repeat, :honest_avg_cost => :truthful_cost)
 
 p2 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Cost degradation (honest agents)",
           title="Degradation vs delta_G", legend=:topright)
@@ -60,7 +60,7 @@ p2 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Cost degradation (honest a
 for ll in ["bounded", "fabrication"]
     ll_df = filter(:lie_level => ==(ll), df)
     isempty(ll_df) && continue
-    ll_sel = select(ll_df, [:window, :delta_G, :repeat, :honest_avg_cost => :lie_cost])
+    ll_sel = select(ll_df, :window, :delta_G, :repeat, :honest_avg_cost => :lie_cost)
     deg = innerjoin(truthful, ll_sel, on=[:window, :delta_G, :repeat])
     deg.degradation = deg.lie_cost .- deg.truthful_cost
 
@@ -100,7 +100,7 @@ p4 = plot(xscale=:log10, xlabel=raw"delta_G", ylabel="Liar's benefit (cost truth
 for ll in ["bounded", "fabrication"]
     ll_df = filter(:lie_level => ==(ll), df)
     isempty(ll_df) && continue
-    ll_sel = select(ll_df, [:window, :delta_G, :repeat, :liar_cost => :lie_cost])
+    ll_sel = select(ll_df, :window, :delta_G, :repeat, :liar_cost => :lie_cost)
     benefit = innerjoin(truthful_liar, ll_sel, on=[:window, :delta_G, :repeat])
     benefit.liar_benefit = benefit.truthful_cost .- benefit.lie_cost
 
