@@ -1,52 +1,77 @@
 sweep_lying_agent summary
 subset_ids = [62, 28, 70, 37, 18, 40]
-liar_idx = 1 (building 62)
+liar_idx = 4 (building 37)
 lie_levels = ["truthful", "bounded", "fabrication"]
-lie_bound = 500.0
+lie_bound = 100.0
 internal_trade_price = midpoint of (grid_buy, grid_sell)
-num_repeats = 4
-delta_G_values = [0.0, 0.1, 1.0, 10.0, 100.0, 1000.0]
+num_repeats = 10
+delta_G_values = [0.0, 0.1, 0.2782559402207124, 0.7742636826811271, 2.154434690031884, 5.99484250318941, 16.68100537200059, 46.4158883361278, 129.1549665014884, 359.38136638046257, 1000.0]
 windows = ["day37_best"]
 dec_avg = Dict("day37_best" => -6977.845198694565)
 
 === Window day37_best ===
 
   lie_level = truthful
-    dg=0.0  honest=-229.3±0.0  liar=-40731.84  total=-6979.72  n=4
-    dg=0.1  honest=-228.98±0.48  liar=-40731.58  total=-6979.41  n=4
-    dg=1.0  honest=-230.9±3.93  liar=-40731.79  total=-6981.05  n=4
-    dg=10.0  honest=-298.31±138.29  liar=-40731.89  total=-7037.24  n=4
-    dg=100.0  honest=-229.02±0.2  liar=-40731.7  total=-6979.47  n=4
-    dg=1000.0  honest=-228.49±0.42  liar=-40731.59  total=-6979.01  n=4
+    dg=0.0  honest=-8640.86±0.0  liar=1325.98  total=-6979.72  n=10
+    dg=0.1  honest=-8640.51±0.33  liar=1326.14  total=-6979.4  n=10
+    dg=0.2782559402207124  honest=-8640.91±0.33  liar=1325.94  total=-6979.77  n=10
+    dg=0.7742636826811271  honest=-8640.5±0.28  liar=1322.17  total=-6980.05  n=10
+    dg=2.154434690031884  honest=-8640.8±0.39  liar=1322.07  total=-6980.32  n=10
+    dg=5.99484250318941  honest=-8668.28±87.52  liar=1257.51  total=-7013.98  n=10
+    dg=16.68100537200059  honest=-8640.64±0.36  liar=1325.89  total=-6979.55  n=10
+    dg=46.4158883361278  honest=-8640.58±0.37  liar=1287.33  total=-6985.93  n=10
+    dg=129.1549665014884  honest=-8640.31±0.26  liar=1326.34  total=-6979.2  n=10
+    dg=359.38136638046257  honest=-8639.98±0.33  liar=1326.66  total=-6978.87  n=10
+    dg=1000.0  honest=-8640.05±0.3  liar=1326.43  total=-6978.97  n=10
 
   lie_level = bounded
-    dg=0.0  honest=-236.55±0.0  liar=-40732.48  total=-6985.87  n=4
-    dg=0.1  honest=-236.64±0.31  liar=-40732.49  total=-6985.95  n=4
-    dg=1.0  honest=-236.67±0.14  liar=-40732.51  total=-6985.97  n=4
-    dg=10.0  honest=-236.38±0.59  liar=-40732.5  total=-6985.74  n=4
-    dg=100.0  honest=-228.26±0.33  liar=-40732.6  total=-6978.98  n=4
-    dg=1000.0  honest=-228.11±0.8  liar=-40731.25  total=-6978.63  n=4
+    dg=0.0  honest=-8642.21±0.0  liar=1269.53  total=-6990.26  n=10
+    dg=0.1  honest=-8641.99±0.48  liar=1269.03  total=-6990.16  n=10
+    dg=0.2782559402207124  honest=-8642.34±0.56  liar=1269.07  total=-6990.44  n=10
+    dg=0.7742636826811271  honest=-8642.11±0.28  liar=1265.69  total=-6990.81  n=10
+    dg=2.154434690031884  honest=-8642.73±0.7  liar=1266.08  total=-6991.26  n=10
+    dg=5.99484250318941  honest=-8642.42±0.61  liar=1267.09  total=-6990.84  n=10
+    dg=16.68100537200059  honest=-8643.31±0.82  liar=1265.68  total=-6991.81  n=10
+    dg=46.4158883361278  honest=-8645.24±0.68  liar=1263.96  total=-6993.7  n=10
+    dg=129.1549665014884  honest=-8646.36±1.89  liar=1269.57  total=-6993.71  n=10
+    dg=359.38136638046257  honest=-8672.62±86.75  liar=1279.09  total=-7014.0  n=10
+    dg=1000.0  honest=-8645.72±1.88  liar=1280.42  total=-6991.36  n=10
 
   lie_level = fabrication
-    dg=0.0  honest=-227.06±0.0  liar=-40733.12  total=-6978.07  n=4
-    dg=0.1  honest=-229.03±4.21  liar=-40731.54  total=-6979.45  n=4
-    dg=1.0  honest=-232.65±11.48  liar=-40731.73  total=-6982.5  n=4
-    dg=10.0  honest=-232.77±11.83  liar=-40731.69  total=-6982.59  n=4
-    dg=100.0  honest=-227.33±0.47  liar=-40731.74  total=-6978.07  n=4
-    dg=1000.0  honest=-230.12±4.46  liar=-40731.08  total=-6980.28  n=4
+    dg=0.0  honest=-8648.81±0.0  liar=1244.17  total=-6999.98  n=10
+    dg=0.1  honest=-8648.81±0.0  liar=1244.17  total=-6999.98  n=10
+    dg=0.2782559402207124  honest=-8648.74±0.07  liar=1245.32  total=-6999.73  n=10
+    dg=0.7742636826811271  honest=-8649.58±0.56  liar=1244.42  total=-7000.58  n=10
+    dg=2.154434690031884  honest=-8668.64±60.23  liar=1242.72  total=-7016.74  n=10
+    dg=5.99484250318941  honest=-8649.47±0.66  liar=1244.41  total=-7000.49  n=10
+    dg=16.68100537200059  honest=-8652.1±7.0  liar=1244.52  total=-7002.66  n=10
+    dg=46.4158883361278  honest=-8649.5±0.38  liar=1245.98  total=-7000.25  n=10
+    dg=129.1549665014884  honest=-8650.21±0.56  liar=1250.47  total=-7000.1  n=10
+    dg=359.38136638046257  honest=-8650.88±0.95  liar=1259.19  total=-6999.2  n=10
+    dg=1000.0  honest=-8650.01±0.96  liar=1263.93  total=-6997.68  n=10
 
   Degradation (honest_avg_cost - truthful_honest_avg_cost):
     bounded:
-      dg=0.0  degradation=-7.25  (-3.16%)
-      dg=0.1  degradation=-7.67  (-3.35%)
-      dg=1.0  degradation=-5.77  (-2.5%)
-      dg=10.0  degradation=61.93  (20.76%)
-      dg=100.0  degradation=0.76  (0.33%)
-      dg=1000.0  degradation=0.38  (0.17%)
+      dg=0.0  degradation=-1.35  (-0.02%)
+      dg=0.1  degradation=-1.48  (-0.02%)
+      dg=0.2782559402207124  degradation=-1.43  (-0.02%)
+      dg=0.7742636826811271  degradation=-1.61  (-0.02%)
+      dg=2.154434690031884  degradation=-1.93  (-0.02%)
+      dg=5.99484250318941  degradation=25.85  (0.3%)
+      dg=16.68100537200059  degradation=-2.68  (-0.03%)
+      dg=46.4158883361278  degradation=-4.65  (-0.05%)
+      dg=129.1549665014884  degradation=-6.05  (-0.07%)
+      dg=359.38136638046257  degradation=-32.64  (-0.38%)
+      dg=1000.0  degradation=-5.67  (-0.07%)
     fabrication:
-      dg=0.0  degradation=2.24  (0.98%)
-      dg=0.1  degradation=-0.05  (-0.02%)
-      dg=1.0  degradation=-1.76  (-0.76%)
-      dg=10.0  degradation=65.54  (21.97%)
-      dg=100.0  degradation=1.69  (0.74%)
-      dg=1000.0  degradation=-1.63  (-0.71%)
+      dg=0.0  degradation=-7.94  (-0.09%)
+      dg=0.1  degradation=-8.3  (-0.1%)
+      dg=0.2782559402207124  degradation=-7.83  (-0.09%)
+      dg=0.7742636826811271  degradation=-9.09  (-0.11%)
+      dg=2.154434690031884  degradation=-27.84  (-0.32%)
+      dg=5.99484250318941  degradation=18.81  (0.22%)
+      dg=16.68100537200059  degradation=-11.47  (-0.13%)
+      dg=46.4158883361278  degradation=-8.92  (-0.1%)
+      dg=129.1549665014884  degradation=-9.9  (-0.11%)
+      dg=359.38136638046257  degradation=-10.89  (-0.13%)
+      dg=1000.0  degradation=-9.95  (-0.12%)
