@@ -31,8 +31,8 @@ const NUM_BUILDS      = 8
 const MAX_COAL        = 4          # 4 keeps ADMM solves tractable (6 is very slow)
 const NUM_STEPS       = 48         # 12 hours (96 = full day; 48 includes k=40 where merges happen)
 const NUM_LOOK_AHEAD  = 8          # MPC horizon
-const RUN_FULL_INFO   = false      # full-info greedy (slow: solves all pairs)
-const RUN_DP          = false      # DP comparison (off by default for collaborators)
+const RUN_FULL_INFO   = true      # full-info greedy (slow: solves all pairs)
+const RUN_DP          = true      # DP comparison (off by default for collaborators)
 const DP_DELTA_G      = 100.0      # privacy budget (only used if RUN_DP=true)
 const DP_SEEDS        = [42, 1, 7] # seeds for the stochastic DP runs
 

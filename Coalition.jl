@@ -30,7 +30,11 @@ agent_ids(a::Vector) = a
 # considered and their utilities) — it MUST NOT be exposed in a deployment
 # where the DP guarantee on the coalition structure is relied upon. Gate the
 # push! with LOG_PICKS so the transcript is only recorded when debugging.
-const LOG_PICKS = false
+# Mutable (not const) so diagnostic scripts can enable it at runtime:
+#   LOG_PICKS = true   # before the run
+#   empty!(PICK_LOG)   # between runs
+# Default false => zero overhead and no behaviour change in production runs.
+global LOG_PICKS = false
 global PICK_LOG = Tuple{Int,Int,Vector{Int},Float64,Vector{Int},Float64,Bool,Float64}[]
 
 
@@ -330,7 +334,9 @@ so the candidate set does not depend on the data. No post-hoc split-check (it
 would violate the DP guarantee). Stochastic — call `Random.seed!` for
 reproducibility.
 
-Returns `(agents, vars, num_iters)`.
+Returns `(agents, vars, num_iters, singleton_vars)` where `singleton_vars[j]`
+is building `j`'s singleton plan solve (threat point / dissolve fallback for
+the fair-pricing mechanism in `coal_MPC`).
 """
 function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0, liar_idx::Union{Int, Nothing}=nothing, lie_level::String="truthful", lie_bound::Float64=0.0)
     agents = Vector(1:length(buildings))
@@ -588,7 +594,20 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
             vars[i] = res[1]
         end
     end
-    return agents, vars, num_iters
+    # P4.1: expose per-building singleton plan solves (threat points for the
+    # fair-pricing mechanism in coal_MPC, and the enacted fallback when a
+    # coalition dissolves). Round 1 solves every singleton so the cache is
+    # complete; the guard re-solve is belt-and-braces.
+    singleton_vars = Vector{Any}(undef, length(buildings))
+    for j in 1:length(buildings)
+        if haskey(singleton_cache, j)
+            singleton_vars[j] = singleton_cache[j][1]
+        else
+            res = single_optimise_ADMM(opt, buildings[j], k, num_look_ahead, receding_horizon)
+            singleton_vars[j] = res[1]
+        end
+    end
+    return agents, vars, num_iters, singleton_vars
 end
 
 """

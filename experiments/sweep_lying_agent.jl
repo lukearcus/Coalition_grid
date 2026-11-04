@@ -31,8 +31,15 @@
 # grand coalition (max_coal_size=num_builds) the liar would always be paired
 # with everyone, decoupling `surplus` from delta_G.
 #
-# Internal coalition trades are priced at the midpoint between grid buy and
-# sell prices, making the liar's gain and honest agents' loss explicit.
+# Internal coalition trades are priced by a max-min fair price LP solved per
+# coalition, per MPC step, over the plan horizon: P(t) is boxed in
+# [grid sell, grid buy]; each member's plan benefit (threat point = its
+# singleton plan cost, minus its coalition plan grid cost, plus priced trades)
+# enters the min; honest members additionally carry a hard >= 0 floor (IR).
+# If the LP is infeasible the coalition dissolves for that step: members
+# settle as singletons and trades are zeroed. The liar is included in the
+# min but exempt from the IR floor (its manipulation cannot hold the
+# coalition hostage, but it also gets no safety net).
 #
 # ============ Configuration (edit here or set via ENV vars) ============
 #   NUM_REPEATS    (default 5)
@@ -115,9 +122,9 @@ end
 
 basin_of(benefit) = benefit < BASIN_NONE ? "A_none" : benefit < BASIN_LOCAL ? "B_local" : "C_global"
 
-# Per-agent cost from buy/sell/coal_exch matrices returned by coal_MPC.
-# Internal coalition trades are priced at the midpoint of grid buy and sell.
-function per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, n_steps)
+# Per-agent cost: grid trades at grid prices, internal coalition trades at the
+# fair per-step prices enacted by coal_MPC (internal_rev[k,i] = P_c(k)*coal_exch).
+function per_agent_costs(buy_mat, sell_mat, internal_rev, opt, n_steps)
     if n_steps <= 96
         buy_cost = opt.energy_cost[1:n_steps]
         sell_price = opt.energy_sale[1:n_steps]
@@ -125,8 +132,8 @@ function per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, n_steps)
         buy_cost = hcat(repeat(opt.energy_cost, n_steps÷96), opt.energy_cost[1:(n_steps%96)])'
         sell_price = hcat(repeat(opt.energy_sale, n_steps÷96), opt.energy_sale[1:(n_steps%96)])'
     end
-    internal_price = (buy_cost + sell_price) / 2
-    return vec(buy_cost' * buy_mat - sell_price' * sell_mat - internal_price' * coal_exch_mat)
+    grid = buy_cost' * buy_mat - sell_price' * sell_mat
+    return vec(grid - sum(internal_rev, dims=1))
 end
 
 # ---------- Decentralised baselines ----------
@@ -147,7 +154,7 @@ end
 data = DataFrame(window=String[], delta_G=Float64[], lie_level=String[], repeat=Int[],
                  honest_avg_cost=Float64[], liar_cost=Float64[], total_avg_cost=Float64[],
                  num_iters=Float64[], time=Float64[], benefit_vs_dec=Float64[],
-                 basin=String[])
+                 basin=String[], dissolve_count=Int[])
 
 total_runs = length(WINDOWS) * length(delta_G_values) * length(LIE_LEVELS) * num_repeats
 t_start = time()
@@ -167,16 +174,16 @@ for (wname, s, dens) in WINDOWS
                     end
                     t1 = time()
 
-                    res, trades, num_iters = coal_MPC((buildings, mcs, k, na, rh) ->
+                    res, trades, num_iters, _, dissolve_count = coal_MPC((buildings, mcs, k, na, rh) ->
                         privacy_focussed_coals_with_delta(buildings, mcs, k, na, rh, delta_G,
                                                           LIAR_IDX, lie_level, LIE_BOUND),
-                        bwin, max_coal_size, num_ahead)
+                        bwin, max_coal_size, num_ahead, receding_horizon, LIAR_IDX)
 
                     t2 = time()
                     runtime = t2 - t1
 
-                    buy_mat, sell_mat, coal_exch_mat = trades
-                    pac = per_agent_costs(buy_mat, sell_mat, coal_exch_mat, opt, N_STEPS)
+                    buy_mat, sell_mat, coal_exch_mat, internal_rev = trades
+                    pac = per_agent_costs(buy_mat, sell_mat, internal_rev, opt, N_STEPS)
                     honest_idx = [i for i in 1:length(pac) if i != LIAR_IDX]
                     honest_avg = mean(pac[honest_idx])
                     liar_cost = pac[LIAR_IDX]
@@ -185,13 +192,14 @@ for (wname, s, dens) in WINDOWS
 
                     push!(data, [wname, delta_G, lie_level, repeat,
                                 honest_avg, liar_cost, total_avg,
-                                num_iters, runtime, benefit, basin_of(benefit)])
+                                num_iters, runtime, benefit, basin_of(benefit),
+                                dissolve_count])
                     CSV.write(OUT_CSV, data)
 
                     done_runs += 1
                     elapsed = time() - t_start
                     eta = done_runs > 1 ? elapsed / done_runs * (total_runs - done_runs) : 0.0
-                    println("  [$wname] dg=$delta_G lie=$lie_level rep=$repeat honest=$(round(honest_avg, digits=1)) liar=$(round(liar_cost, digits=1)) total=$(round(total_avg, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
+                    println("  [$wname] dg=$delta_G lie=$lie_level rep=$repeat honest=$(round(honest_avg, digits=1)) liar=$(round(liar_cost, digits=1)) total=$(round(total_avg, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) diss=$(dissolve_count) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
                 catch e
                     println("  FAILED [$wname] dg=$delta_G lie=$lie_level rep=$repeat: $(typeof(e)): $e")
                 end
@@ -211,7 +219,7 @@ open(OUT_SUM, "w") do io
     println(io, "liar_idx = $LIAR_IDX (building $(SUBSET_IDS[LIAR_IDX]))")
     println(io, "lie_levels = $(LIE_LEVELS)")
     println(io, "lie_bound = $LIE_BOUND")
-    println(io, "internal_trade_price = midpoint of (grid_buy, grid_sell)")
+    println(io, "internal_trade_price = max-min fair LP (honest-only IR, dissolve on infeasible)")
     println(io, "num_repeats = $num_repeats")
     println(io, "delta_G_values = $(delta_G_values)")
     println(io, "windows = $([w[1] for w in WINDOWS])")
@@ -227,10 +235,11 @@ open(OUT_SUM, "w") do io
                          :honest_avg_cost => std  => :std_honest,
                          :liar_cost       => mean => :mean_liar,
                          :total_avg_cost  => mean => :mean_total,
+                         :dissolve_count  => mean => :mean_dissolve,
                          nrow => :n_runs)
             println(io, "\n  lie_level = $ll")
             for r in eachrow(gdf)
-                println(io, "    dg=$(r.delta_G)  honest=$(round(r.mean_honest, digits=2))±$(round(r.std_honest, digits=2))  liar=$(round(r.mean_liar, digits=2))  total=$(round(r.mean_total, digits=2))  n=$(r.n_runs)")
+                println(io, "    dg=$(r.delta_G)  honest=$(round(r.mean_honest, digits=2))±$(round(r.std_honest, digits=2))  liar=$(round(r.mean_liar, digits=2))  total=$(round(r.mean_total, digits=2))  diss=$(round(r.mean_dissolve, digits=2))  n=$(r.n_runs)")
             end
         end
         # Degradation table: honest cost relative to truthful

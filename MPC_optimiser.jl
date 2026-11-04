@@ -519,17 +519,81 @@ function coal_stability_score(coal,old_coal)
 	return z_sum/binomial(num_builds,2)
 end
 
-function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,num_look_ahead::Int,receding_horizon::Bool=false)
+# P4.3: Fair internal coalition trade price (max-min member benefit, honest-only
+# IR floor). Over the coalition's plan horizon H from timestep k, solve
+#   max tau  s.t. benefit_j(P) >= tau            (all members j)
+#                benefit_j(P) >= 0               (honest members only)
+#                P^sell(t) <= P(t) <= P^buy(t)    (t = 1..H)
+# where benefit_j(P) = (Jdec_j - Jcoal_j) + sum_t P(t)*coal_exch(t,j):
+# Jdec_j is member j's singleton plan cost (threat point), Jcoal_j its plan
+# grid cost under the coalition, coal_exch(t,j) the consensus plan trade
+# (positive = export). Prices re-solve every k (coalitions re-form under MPC);
+# only P*(1) is enacted. Infeasible -> (nothing, false): no admissible price
+# keeps every honest member at/above its threat point, so the coalition
+# dissolves this step.
+function coalition_fair_price(opt::MPC_optimiser, res, member_positions, k::Int,
+                               singleton_vars, liar_idx::Union{Int, Nothing})
+	H = size(res[1], 1)
+	m = length(member_positions)
+	# Consensus plan trades (positive = export), NaN-guarded
+	x = zeros(Float64, H, m)
+	for t in 1:H, j in 1:m
+		v = res[6][t, j]
+		x[t, j] = isnan(v) ? 0.0 : v
+	end
+	# Members' plan grid costs under the coalition
+	g = zeros(Float64, m)
+	for j in 1:m
+		v = value(res[5][1, j])
+		isnan(v) && return (nothing, false)
+		g[j] = v
+	end
+	# Threat points: members' singleton plan costs
+	d = zeros(Float64, m)
+	for j in 1:m
+		v = value(singleton_vars[member_positions[j]][5][1])
+		isnan(v) && return (nothing, false)
+		d[j] = v
+	end
+	bk = energy_cost_k(opt, k, H)
+	sk = energy_sale_k(opt, k, H)
+	model = Model(SCS.Optimizer)
+	set_silent(model)
+	set_optimizer_attribute(model, "eps_abs", 1e-4)
+	set_optimizer_attribute(model, "eps_rel", 1e-4)
+	@variable(model, sk[t] <= P[t = 1:H] <= bk[t])
+	@variable(model, tau)
+	@objective(model, Max, tau)
+	for j in 1:m
+		base = d[j] - g[j]
+		@constraint(model, base + sum(P[t] * x[t, j] for t in 1:H) >= tau)
+		if liar_idx === nothing || member_positions[j] != liar_idx
+			@constraint(model, base + sum(P[t] * x[t, j] for t in 1:H) >= 0)
+		end
+	end
+	optimize!(model)
+	st = termination_status(model)
+	if st == OPTIMAL || st == ALMOST_OPTIMAL
+		return (value(P[1]), true)
+	end
+	return (nothing, false)
+end
+
+function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size::Int,num_look_ahead::Int,receding_horizon::Bool=false,liar_idx::Union{Int, Nothing}=nothing)
     num_steps = length(bs[1].act_cons)
 	num_builds = length(bs)
 	buy = zeros(num_steps,num_builds)
 	sell = zeros(num_steps,num_builds)
 	coal_exch_mat = zeros(num_steps,num_builds)
+	internal_rev = zeros(num_steps,num_builds)
 	num_iters = 0
 	old_coal = 0
 	stab_score = []
+	dissolve_count = 0
 	for k = 1:num_steps
-        coal, outs, num_iters_k = coal_former(bs,max_coal_size,k,num_look_ahead,receding_horizon)
+        coal_ret = coal_former(bs,max_coal_size,k,num_look_ahead,receding_horizon)
+        coal, outs, num_iters_k = coal_ret[1], coal_ret[2], coal_ret[3]
+        singleton_vars = length(coal_ret) >= 4 ? coal_ret[4] : nothing
 		num_iters += num_iters_k
         # if coal isa Vector{Vector{MPC_Building}}
         #     outs = [single_optimise_ADMM(opt, agent, k) for agent in coal]
@@ -545,27 +609,60 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 		end
 		old_coal = coal
 		for (res,agent) in zip(outs, coal)
+            agent_raw = nothing
             if !(coal isa Vector{Vector{MPC_Building}})
+                agent_raw = agent
                 agent = bs[agent]
             end
 			if !(agent isa MPC_Building)
-				for (i,b) in enumerate(agent)
-					if k < num_steps
-						# P3.3: guard against NaN from a non-converged SCS solve
-						next_soc = value(res[4][2,i])
-						b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
+				# P4.2: fair internal trade price over the plan (max-min member
+				# benefit, honest-only IR floor, price boxed in [grid sell, grid
+				# buy]). Infeasible -> dissolve this step: members settle as
+				# singletons (their own round-1 plans) and trades are zeroed.
+				price1 = nothing
+				dissolved = false
+				if singleton_vars !== nothing && agent_raw !== nothing
+					price1, feasible = coalition_fair_price(opt, res, agent_raw, k, singleton_vars, liar_idx)
+					if !feasible
+						dissolved = true
+						dissolve_count += 1
 					end
-					# println(b.SoC)
-				ce = value(res[6][1,i])
-				coal_exch_mat[k,b.id] = isnan(ce) ? 0.0 : ce
-				remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
-				isnan(remaining) && (remaining = 0.0)
-				if remaining > 0
-					sell[k,b.id] = remaining
-				else
-					buy[k,b.id]=-remaining
 				end
-				# println(remaining)
+				for (i,b) in enumerate(agent)
+					if dissolved
+						# Dissolved: enact the member's own singleton plan this step
+						sv = singleton_vars[agent_raw[i]]
+						if k < num_steps
+							next_soc = value(sv[4][2, 1])
+							b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
+						end
+						remaining = b.act_prod[k]-b.act_cons[k]-value(sv[1][1, 1])
+						isnan(remaining) && (remaining = 0.0)
+						if remaining > 0
+							sell[k,b.id] = remaining
+						else
+							buy[k,b.id]=-remaining
+						end
+						coal_exch_mat[k,b.id] = 0.0
+					else
+						if k < num_steps
+							# P3.3: guard against NaN from a non-converged SCS solve
+							next_soc = value(res[4][2,i])
+							b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
+						end
+						ce = value(res[6][1,i])
+						coal_exch_mat[k,b.id] = isnan(ce) ? 0.0 : ce
+						if price1 !== nothing
+							internal_rev[k,b.id] = price1 * coal_exch_mat[k,b.id]
+						end
+						remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
+						isnan(remaining) && (remaining = 0.0)
+						if remaining > 0
+							sell[k,b.id] = remaining
+						else
+							buy[k,b.id]=-remaining
+						end
+					end
 				end
 			else
 				b = agent
@@ -593,5 +690,5 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 		sell_price = hcat(repeat(opt.energy_sale,num_steps÷96), opt.energy_sale[1:(num_steps%96)])'
 	end
 	cost = sum(buy_cost'*buy-sell_price'*sell)
-	return cost, [buy, sell, coal_exch_mat], num_iters/num_steps, stab_score
+	return cost, [buy, sell, coal_exch_mat, internal_rev], num_iters/num_steps, stab_score, dissolve_count
 end
