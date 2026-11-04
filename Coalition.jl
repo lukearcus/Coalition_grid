@@ -12,11 +12,14 @@ using Base.Threads
 #     No differential-privacy guarantee. Fully reproducible.
 #
 #   Differential privacy (DP) — privacy_focussed_coals_with_delta
-#     Exponential mechanism over pair values; delta_G is the privacy budget
-#     (delta_G=0 -> argmax/deterministic pick; larger -> softer, more private
-#     sampling). All pairs enter the pool (incompatible ones get value 0) so the
-#     candidate set does not leak data. The myopic split-check is removed
-#     (it would break the DP guarantee). Stochastic — set a seed.
+#     Exponential mechanism over pair values with a total budget `epsilon`
+#     split across the at-most-K = N - ceil(N/C_max) merges as eps_d =
+#     epsilon/K (sequential composition). delta_G scales the sensitivity
+#     bound delta_u: 0 -> argmax/deterministic pick; larger -> softer, more
+#     private sampling. All size-feasible pairs enter the pool (incompatible
+#     ones get value 0) so the candidate set does not leak data. The myopic
+#     split-check is removed (it would break the DP guarantee). Stochastic —
+#     set a seed.
 # =============================================================================
 
 # Return the building-id list for an agent (Int singleton or Vector coalition)
@@ -323,22 +326,29 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
 end
 
 """
-    privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_look_ahead, receding_horizon=false, delta_G=100.0)
+    privacy_focussed_coals_with_delta(buildings, max_coal_size, k, num_look_ahead, receding_horizon=false, delta_G=100.0, liar_idx=nothing, lie_level="truthful", lie_bound=0.0, epsilon=1.0)
 
 Differentially-private coalition formation for MPC buildings (exponential mechanism).
 
-`delta_G` is the privacy budget: 0.0 → argmax (deterministic pick, still
-mechanism-shaped but no randomness), larger → softer sampling (more private).
-All candidate pairs enter the sampling pool (incompatible pairs get value 0)
-so the candidate set does not depend on the data. No post-hoc split-check (it
-would violate the DP guarantee). Stochastic — call `Random.seed!` for
+`delta_G` is the sensitivity scaling knob: 0.0 → argmax (deterministic pick,
+still mechanism-shaped but no randomness and no DP), larger → softer sampling
+(more private). `epsilon` (default 1.0) is the TOTAL privacy budget for one
+formation run. At most K = N - ceil(N/C_max) merges can occur across the run
+(each merge reduces the coalition count by one, and the final count is at
+least ceil(N/C_max) since coalitions are capped at max_coal_size), so each
+draw of the exponential mechanism uses eps_d = epsilon / K and sequential
+composition bounds the whole run at epsilon. The pool contains only
+size-feasible pairs (incompatible pairs get value 0 and stay samplable), so
+every draw is an accepted merge and the number of draws is exactly the number
+of merges — the composition is tight. No post-hoc split-check (it would
+violate the DP guarantee). Stochastic — call `Random.seed!` for
 reproducibility.
 
 Returns `(agents, vars, num_iters, singleton_vars)` where `singleton_vars[j]`
 is building `j`'s singleton plan solve (threat point / dissolve fallback for
 the fair-pricing mechanism in `coal_MPC`).
 """
-function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0, liar_idx::Union{Int, Nothing}=nothing, lie_level::String="truthful", lie_bound::Float64=0.0)
+function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_coal_size::Int, k::Int,num_look_ahead::Int,receding_horizon::Bool=false, delta_G::Float64=100.0, liar_idx::Union{Int, Nothing}=nothing, lie_level::String="truthful", lie_bound::Float64=0.0, epsilon::Float64=1.0)
     agents = Vector(1:length(buildings))
     done = false
     energy_diff = opt.energy_cost-opt.energy_sale
@@ -346,6 +356,19 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
     max_price_diff = maximum(abs.(opt.energy_cost - opt.energy_sale))
     # Add minimum threshold to prevent numerical issues with very small delta_G
     delta_u = max(delta_G * max_price_diff, 1e-10)
+    # DP composition: `epsilon` is the TOTAL privacy budget for one formation
+    # run. At most K = N - ceil(N/C_max) merges are possible (each merge
+    # reduces the coalition count by 1, and the final count is at least
+    # ceil(N/C_max) since every coalition is capped at max_coal_size), so the
+    # per-draw exponential-mechanism parameter eps_d = epsilon/K composes to
+    # at most epsilon over the whole run. This holds because the pool only
+    # contains size-feasible pairs (see the pool construction below): every
+    # draw is accepted as a merge, so draws = merges <= K.
+    N = length(buildings)
+    K = N - cld(N, max_coal_size)
+    # K == 0 only when max_coal_size < 2 (no pair can ever be feasible, the
+    # pool is empty and eps_d is never used). Guard the division regardless.
+    eps_d = K > 0 ? epsilon / K : 0.0
     num_iters=0
     vars = 0
     # P1.2: Cache singleton results: building_id => (vars, cons_vec)
@@ -458,24 +481,35 @@ function privacy_focussed_coals_with_delta(buildings::Vector{MPC_Building}, max_
         end
         poss_coals = collect(combinations(agents,2))
         poss_coal_vals = Dict()
-        # DP: every pair enters the pool unconditionally. pair_val_mat[i,j] is
-        # already 0 for incompatible pairs (the opp.*m term vanishes), so they
-        # get value 0 and a correspondingly small (but positive) softmax weight
-        # and remain samplable. Filtering them out would leak the compatibility
-        # structure of the data through the sampler's candidate set.
+        # DP: pairs enter the pool on two conditions.
+        #   1. Compatibility is NOT filtered: pair_val_mat[i,j] is already 0
+        #      for incompatible pairs (the opp.*m term vanishes), so they get
+        #      value 0 and a correspondingly small (but positive) softmax
+        #      weight and remain samplable. Filtering on compatibility would
+        #      leak the data's compatibility structure through the candidate set.
+        #   2. Size IS filtered: only pairs whose combined size fits within
+        #      max_coal_size enter the pool. Coalition sizes are a function of
+        #      the previously released merge transcript (not of the raw data),
+        #      so conditioned on that transcript the pool membership is
+        #      data-independent — this leaks nothing extra under sequential
+        #      composition. It also makes every draw a feasible, accepted merge,
+        #      so draws = merges <= K and the eps_d = epsilon/K budget is exact.
         for c in poss_coals
-            i = findfirst(==(c[1]), agents)
-            j = findfirst(==(c[2]), agents)
-            poss_coal_vals[c] = pair_val_mat[i, j]
+            if length(agent_ids(c[1])) + length(agent_ids(c[2])) <= max_coal_size
+                i = findfirst(==(c[1]), agents)
+                j = findfirst(==(c[2]), agents)
+                poss_coal_vals[c] = pair_val_mat[i, j]
+            end
         end
         # sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         #
         new_agents = Vector()
         # P2.1: Track whether any merge was actually accepted this round; if not, exit.
         merge_happened = false
-        epsilon = 1e-0
         ks = collect(keys(poss_coal_vals))
-        wv = [epsilon*poss_coal_vals[i]/(2*delta_u) for i in ks]
+        # Per-draw EM parameter eps_d = epsilon/K (computed once per run; see
+        # the budget computation above the round loop).
+        wv = [eps_d*poss_coal_vals[i]/(2*delta_u) for i in ks]
         # Numerically stable softmax: subtract max before exp() to prevent
         # overflow without flattening large weights into a uniform distribution.
         mw = isempty(wv) ? 0.0 : maximum(wv)
