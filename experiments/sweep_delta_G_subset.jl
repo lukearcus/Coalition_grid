@@ -90,13 +90,16 @@ const BASIN_NONE_PCT  = 0.02
 const BASIN_LOCAL_PCT = 0.08
 
 # Output files (incremental writes survive a crash).
-const OUT_CSV = "results/sweep_delta_G_synthetic.csv"
-const OUT_SUM = "results/sweep_delta_G_synthetic_summary.txt"
+#const OUT_CSV = "results/sweep_delta_G_synthetic.csv"
+#const OUT_SUM = "results/sweep_delta_G_synthetic_summary.txt"
+const OUT_CSV = "results/sweep_delta_G.csv"
+const OUT_SUM = "results/sweep_delta_G_summary.txt"
 
 # ---------- Load data and helpers ----------
 # Load all 30 synthetic buildings (672-row series), then slice subset + window.
-println("Loading synthetic data for 30 buildings (672 steps)...")
-all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 672, "synthetic_data")
+#println("Loading synthetic data for 30 buildings (672 steps)...")
+println("Loading data for 30 buildings (672 steps)...")
+all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 672)#, "synthetic_data")
 opt = MPC_optimiser(energy_cost', energy_sale')
 println("Loaded. num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
 
