@@ -1,0 +1,20 @@
+========================================================================
+Benchmark: 8 buildings, 48 timesteps, horizon=8, max_coal=4
+========================================================================
+
+Method                              cost          time     iters/step
+------------------------------------------------------------------------
+  Decentralised (no coop)           cost=   1727.02  time=  18.63s  iters/step= 8.00
+  Limited-info (non-DP)             cost=   1708.34  time= 151.69s  iters/step=129.98
+  Full-info greedy                  cost=   1669.23  time=2553.25s  iters/step=2344.31
+  DP (delta_G=100.0, seed=42)       cost=   1644.06  time= 482.35s  iters/step=514.96
+  DP (delta_G=100.0, seed=1)        cost=   1659.33  time= 435.45s  iters/step=466.54
+  DP (delta_G=100.0, seed=7)        cost=   1664.20  time= 433.95s  iters/step=424.25
+
+Coalition structure at k=40 (non-DP):
+  [6]
+  [7]
+  [1]
+  [3]
+  [4, 8]
+  [2, 5]
