@@ -7,6 +7,32 @@ struct MPC_optimiser
     energy_sale::Array{Float64}
 end
 
+# P3.9 (diagnostic): global counter of SCS solve failures at the hot-path
+# solve sites (ADMM build/coal cache solves and the fair-price LP). C-level
+# SCS failures (LDL factorization "non-convex" errors, init_lin_sys_work
+# failure) do NOT throw out of optimize! — the model is left non-optimal and
+# variable values come back NaN, which the existing NaN guards absorb
+# silently. This counter makes them visible: experiment scripts reset it
+# before each run and report it as a column.
+global SCS_FAIL_COUNT = 0
+
+# Count a solve failure if the model did not reach OPTIMAL/ALMOST_OPTIMAL.
+# Read-only apart from the counter — no behaviour change at any call site.
+# `infeasible_ok=true` (used at the fair-price LP site) does NOT count
+# INFEASIBLE: that is the designed dissolve path (reported via the
+# `dissolves` column), not a solver failure.
+function scs_count_failure!(model; infeasible_ok::Bool=false)
+    st = termination_status(model)
+    ok = st == OPTIMAL || st == ALMOST_OPTIMAL
+    if infeasible_ok
+        ok = ok || st == INFEASIBLE
+    end
+    if !ok
+        global SCS_FAIL_COUNT += 1
+    end
+    return st
+end
+
 function energy_cost_k(opt::MPC_optimiser, k::Int, num_steps::Int=96)
 	last_elem = length(opt.energy_cost)
 	return vcat(opt.energy_cost[k:last_elem], opt.energy_cost[1:k-1])[1:num_steps]
@@ -284,6 +310,7 @@ function ADMM_build_opt_solve(cache::ADMMBuildCache, coal_trades::Vector{Float64
 		end
 	end
 	optimize!(cache.model)
+	scs_count_failure!(cache.model)
 	return [cache.delta_s, cache.grid_cons, cache.grid_sell, cache.charge, cache.cost, cache.coal_exch]
 end
 
@@ -325,6 +352,7 @@ function ADMM_coal_update_solve(cache::ADMMCoalCache, lambda::Vector{Vector{Floa
 		end
 	end
 	optimize!(cache.model)
+	scs_count_failure!(cache.model)
 	return value.(cache.coal_exch)
 end
 
@@ -572,7 +600,9 @@ function coalition_fair_price(opt::MPC_optimiser, res, member_positions, k::Int,
 		end
 	end
 	optimize!(model)
-	st = termination_status(model)
+	# infeasible_ok: LP infeasibility is the designed dissolve path, not a
+	# solver failure — see scs_count_failure! docstring.
+	st = scs_count_failure!(model; infeasible_ok=true)
 	if st == OPTIMAL || st == ALMOST_OPTIMAL
 		return (value(P[1]), true)
 	end

@@ -1,42 +1,48 @@
 # =============================================================================
-# delta_G sweep on a high-complementarity subset of the synthetic dataset.
+# delta_G sweep on a high-complementarity subset of the REAL (EDF) dataset.
 #
-# The synthetic data has 30 buildings across 10 archetypes (solar, wind,
-# office, industrial, residential, etc.) with 4-tier TOU prices (buy-sell
-# spread 0.05–0.30) and 7 days × 96 steps = 672 rows. Mean pairwise
-# complementarity is ~39% (vs 11% for the original data).
+# Real data: 70 buildings, 4766 steps (~49.6 days x 96 steps), prices are a
+# 672-step buy/sell series (data/edf_prices.csv). Mean pairwise opposition
+# density is ~11% overall, so subset/window choice matters far more than on
+# the synthetic data (~39%).
 #
-# Subset: 6 buildings chosen for maximum temporal complementarity:
-#   1  = solar farm     (midday seller)
-#   10 = industrial     (always buyer, flat)
-#   16 = data center    (always buyer, high)
-#   25 = coastal wind   (overnight seller, 3am peak)
-#   28 = hilltop wind   (evening seller, 5pm peak)
-#   7  = residential    (AM/PM buyer, double peak)
+# Subset: small6 from experiments/search_subset_window.jl — PV producers
+# (62, 28, 70) mixed with net consumers (37, 18, 40).
+# Window: day37_best (start row 3553), the highest opposition-density window
+# (0.254) found by the earlier search. NOTE: window slicing re-bases the
+# series to k=1..96, so all windows use the same first-day price pattern;
+# only load/PV profiles differ (see search_subset_window.jl).
 #
-# This gives 3 net sellers with staggered generation profiles + 3 net buyers
-# with distinct consumption patterns — the conditions where coalition
-# formation is most valuable and the privacy/cost tradeoff most visible.
+# ============ Preflight gate ============
+# Before sweeping, the script computes all 15 pair utilities at k=1 (SoC=0)
+# — the pool the exponential mechanism actually samples from — and ABORTS
+# unless at least MIN_POSITIVE_PAIRS have positive value. Rationale: when
+# all pair values are 0 the softmax is uniform for EVERY delta_G, so the
+# sweep's delta_G axis is a no-op (this is exactly what happened with the
+# synthetic-archetype subset [1,10,16,25,28,7] on real data: 15/15 pairs
+# zero, 82/96 coalitions dissolved, benefit ~0.1-0.3% for all delta_G).
+#
+# ============ Extra columns ============
+# Per run: dissolves (fair-price infeasible -> members enact singleton plans
+# that step) and internal_trade (total |coalition exchange| volume / 2), so
+# the "coalitions form but never trade / always dissolve" pathology is
+# visible directly in the CSV. scs_fails counts SCS solves that terminated
+# non-optimally (C-level LDL failures do not throw — see
+# MPC_optimiser.jl SCS_FAIL_COUNT).
 #
 # ============ Configuration (edit here or set via ENV vars) ============
 #   NUM_REPEATS    (default 10)  repeats per (window, delta_G)
 #   DELTA_G_POINTS (default 10)  log-spaced points from 0.1 to 10000
 #                                (plus delta_G=0 deterministic anchor)
 #
-# ============ Windows ============
-# Two windows: day 0 (weekday — schools/offices active) and day 5 (weekend —
-# different demand pattern). Each window recomputes its own decentralised
-# baseline.
-#
 # ============ Known issue (worked around) ============
-# coal_MPC indexes buy/sell by b.id assuming id==position
-# (MPC_optimiser.jl:525,527,540,542). The subset IDs [1,10,16,...] would
-# crash, so slice_window re-IDs buildings to 1..N. Fix the indexing bug
-# separately and this workaround can be dropped.
+# coal_MPC indexes buy/sell by b.id assuming id==position. The subset IDs
+# [62,28,70,...] would crash, so slice_window re-IDs buildings to 1..N.
+# Fix the indexing bug separately and this workaround can be dropped.
 #
 # ============ Run ============
 #   julia --threads auto experiments/sweep_delta_G_subset.jl
-# (from repo root -- loaders read synthetic_data/ relative to cwd)
+# (from repo root -- loaders read cleaned_data/ and data/ relative to cwd)
 # =============================================================================
 
 try
@@ -54,15 +60,19 @@ include("../Coalition.jl")
 include("../load_EMS_data.jl")
 
 # ---------- Configuration ----------
-# High-complementarity subset: 3 net sellers with staggered generation
-# (solar midday, coastal wind overnight, hilltop wind evening) + 3 net buyers
-# (industrial 24/7, data center 24/7, residential AM/PM peaks).
-const SUBSET_IDS = [1, 10, 16, 25, 28, 7]
+# High-complementarity real-data subset ("small6" from
+# experiments/search_subset_window.jl): PV producers (62, 28, 70) mixed
+# with net consumers (37, 18, 40).
+const SUBSET_IDS = [62, 28, 70, 37, 18, 40]
 const num_builds = length(SUBSET_IDS)
 const max_coal_size = 2
 const num_ahead = 8
 const receding_horizon = false
 const N_STEPS = 96
+
+# Preflight gate: minimum number of positive-value pairs (of 15) required
+# at k=1, or the sweep aborts. See header rationale.
+const MIN_POSITIVE_PAIRS = 4
 
 # ENV overrides with sensible defaults.
 const num_repeats    = parse(Int, get(ENV, "NUM_REPEATS", "10"))
@@ -70,17 +80,14 @@ const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "10"))
 
 # delta_G grid: 0.0 (deterministic argmax anchor) + log-spaced 0.01..1000.
 # 0.01..1000 spans greedy (small) -> softmax (~1-10) -> near-uniform (large).
-# The critical transition for this subset was 0.1..10 in the quick diagnostic,
-# which gets ~9 points under the default 20-point log spacing.
 # (length>=2 required by range(); the script guards against length=1.)
 const delta_G_values = [0.0; 10 .^ range(-1, 4; length=max(delta_g_points, 2))]
 
-# Windows: (name, start_row, opp_density). day d starts at row d*96+1.
-# Day 0 = weekday (schools/offices active), day 5 = weekend (schools off,
-# offices off — different demand pattern).
+# Window: (name, start_row, opposition density) from
+# search_subset_window.jl. day37_best = highest complementarity window found
+# (0.254 opposition density) vs 0.148 for day 0.
 const WINDOWS = [
-    ("day0_weekday", 1,   0.0),
-    ("day5_weekend", 481, 0.0),
+    ("day37_best", 3553, 0.254),
 ]
 
 # Basin classification (relative to dec_avg, so it auto-calibrates to the
@@ -96,10 +103,10 @@ const OUT_CSV = "results/sweep_delta_G.csv"
 const OUT_SUM = "results/sweep_delta_G_summary.txt"
 
 # ---------- Load data and helpers ----------
-# Load all 30 synthetic buildings (672-row series), then slice subset + window.
-#println("Loading synthetic data for 30 buildings (672 steps)...")
-println("Loading data for 30 buildings (672 steps)...")
-all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(30, 672)#, "synthetic_data")
+# Load all 70 real buildings (full 4766-step series) so the day37 window
+# (start row 3553) is reachable, then slice subset + window.
+println("Loading real data for 70 buildings (4766 steps)...")
+all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(70, 4766)
 opt = MPC_optimiser(energy_cost', energy_sale')
 println("Loaded. num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
 
@@ -118,6 +125,56 @@ end
 
 basin_of(benefit, dec_avg) = benefit < BASIN_NONE_PCT * abs(dec_avg) ? "A_none" : benefit < BASIN_LOCAL_PCT * abs(dec_avg) ? "B_local" : "C_global"
 
+# ---------- Preflight gate: pair utilities at k=1 ----------
+# Compute all 15 pair utilities exactly as privacy_focussed_coals_with_delta
+# does in round 1 of MPC step 1 (SoC=0): singleton net-consumption plans,
+# then the opp-sign min value over the horizon. If too few pairs have
+# positive value, the softmax is (near-)uniform for every delta_G and the
+# sweep would be uninformative — abort instead of burning ~1h of compute.
+function preflight_pair_values(bwin)
+    cvs = Vector{Vector{Float64}}(undef, length(bwin))
+    for j in eachindex(bwin)
+        res = single_optimise_ADMM(opt, [bwin[j]], 1, num_ahead, receding_horizon)
+        cvs[j] = vec(sum(value(res[1][2] - res[1][3]), dims=2))
+    end
+    horizon = min(length(bwin[1].act_cons) - 1 + 1, num_ahead)
+    diff_vec = (opt.energy_cost - opt.energy_sale)[1:horizon]
+    vals = Dict{Tuple{Int,Int},Float64}()
+    for i in 1:length(bwin), j in i+1:length(bwin)
+        v = 0.0
+        for t in 1:horizon
+            if cvs[i][t] * cvs[j][t] < 0
+                v += diff_vec[t] * min(abs(cvs[i][t]), abs(cvs[j][t]))
+            end
+        end
+        vals[(i, j)] = v
+    end
+    return vals
+end
+
+println("\n=== Preflight: pair utilities at k=1 (SoC=0) per window ===")
+gate_ok = true
+for (wname, s, dens) in WINDOWS
+    bwin = slice_window(all_buildings_full, SUBSET_IDS, s, N_STEPS)
+    for b in bwin
+        fill!(b.SoC, 0.0)
+    end
+    vals = preflight_pair_values(bwin)
+    println("  [$wname] (start=$s, dens=$dens):")
+    for (pair, v) in sort(collect(vals); by=last, rev=true)
+        println("    ($(SUBSET_IDS[pair[1]]), $(SUBSET_IDS[pair[2]])) = $(round(v, digits=2))")
+    end
+    n_pos = count(v -> v > 1e-6, values(vals))
+    println("    positive pairs: $n_pos/15 (gate requires >= $MIN_POSITIVE_PAIRS)")
+    if n_pos < MIN_POSITIVE_PAIRS
+        println("    *** PREFLIGHT GATE FAILED for $wname: the exponential-mechanism pool has too few positive-value pairs. Choose a different subset/window (see experiments/search_subset_window.jl). Aborting before the sweep. ***")
+        global gate_ok = false
+    end
+end
+if !gate_ok
+    exit(1)
+end
+
 # ---------- Per-window decentralised baselines ----------
 println("\nComputing decentralised baselines per window:")
 dec_avg = Dict{String, Float64}()
@@ -133,8 +190,9 @@ for (wname, s, dens) in WINDOWS
 end
 
 # ---------- Sweep ----------
-data = DataFrame(window=[], delta_G=[], repeat=[], average_cost=[], num_iters=[],
-                 time=[], benefit_vs_dec=[], basin=[])
+data = DataFrame(window=String[], delta_G=Float64[], repeat=Int[], average_cost=Float64[],
+                num_iters=Float64[], time=Float64[], benefit_vs_dec=Float64[], basin=String[],
+                dissolves=Int[], internal_trade=Float64[], scs_fails=Int[])
 
 total_runs = length(WINDOWS) * length(delta_G_values) * num_repeats
 t_start = time()
@@ -163,7 +221,10 @@ for (wname, s, dens) in WINDOWS
                 end
                 t1 = time()
 
-                res, _, num_iters = coal_MPC((buildings, mcs, k, na, rh) ->
+                # Reset the SCS failure counter (MPC_optimiser.jl) for this run.
+                global SCS_FAIL_COUNT = 0
+
+                res, out2, num_iters, stab, dissolves = coal_MPC((buildings, mcs, k, na, rh) ->
                     privacy_focussed_coals_with_delta(buildings, mcs, k, na, rh, delta_G),
                     bwin, max_coal_size, num_ahead)
 
@@ -171,13 +232,17 @@ for (wname, s, dens) in WINDOWS
                 runtime = t2 - t1
                 avg_cost = res / num_builds
                 benefit = dec_avg[wname] - avg_cost   # positive = coalition cheaper
-                push!(data, [wname, delta_G, repeat, avg_cost, num_iters, runtime, benefit, basin_of(benefit, dec_avg[wname])])
+                # out2 = [buy, sell, coal_exch_mat, internal_rev]; each trade
+                # appears with opposite signs on the two members, so /2 gives
+                # the traded volume.
+                internal_trade = sum(abs.(out2[3])) / 2
+                push!(data, [wname, delta_G, repeat, avg_cost, num_iters, runtime, benefit, basin_of(benefit, dec_avg[wname]), dissolves, internal_trade, SCS_FAIL_COUNT])
 
                 CSV.write(OUT_CSV, data)
                 done_runs += 1
                 elapsed = time() - t_start
                 eta = done_runs > 1 ? elapsed / done_runs * (total_runs - done_runs) : 0.0
-                println("  [$wname] dg=$delta_G rep=$repeat cost=$(round(avg_cost, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) basin=$(basin_of(benefit, dec_avg[wname])) | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
+                println("  [$wname] dg=$delta_G rep=$repeat cost=$(round(avg_cost, digits=1)) benefit=$(round(benefit, digits=1)) ($(round(100*benefit/abs(dec_avg[wname]), digits=2))%) basin=$(basin_of(benefit, dec_avg[wname])) diss=$dissolves trade=$(round(internal_trade, digits=1)) scs_fails=$SCS_FAIL_COUNT | $(done_runs)/$total_runs ETA=$(round(eta/60, digits=1))min")
             catch e
                 println("  FAILED [$wname] dg=$delta_G rep=$repeat: $(typeof(e)): $e")
             end
@@ -191,7 +256,7 @@ println("\n============================================================")
 println("Summary: subset=$(SUBSET_IDS)  num_repeats=$num_repeats")
 println("============================================================")
 open(OUT_SUM, "w") do io
-    println(io, "sweep_delta_G_synthetic summary")
+    println(io, "sweep_delta_G summary (real data, small6 @ day37_best)")
     println(io, "subset_ids = $(SUBSET_IDS)")
     println(io, "num_repeats = $num_repeats")
     println(io, "delta_G_values = $(delta_G_values)")
@@ -212,6 +277,11 @@ open(OUT_SUM, "w") do io
             :average_cost  => maximum => :max_cost,
             :benefit_vs_dec => mean => :mean_benefit,
             :benefit_vs_dec => std  => :std_benefit,
+            :dissolves      => mean => :mean_dissolves,
+            :internal_trade => mean => :mean_trade,
+            :scs_fails      => mean => :mean_scs_fails,
+            :num_iters      => mean => :mean_iters,
+            :time           => mean => :mean_time,
             :basin => (b -> count(==("A_none"), b))  => :n_A_none,
             :basin => (b -> count(==("B_local"), b)) => :n_B_local,
             :basin => (b -> count(==("C_global"), b)) => :n_C_global,
@@ -230,6 +300,9 @@ for (wname, s, dens) in WINDOWS
         :average_cost  => mean => :mean_cost,
         :average_cost  => std  => :std_cost,
         :benefit_vs_dec => mean => :mean_benefit,
+        :dissolves      => mean => :mean_diss,
+        :internal_trade => mean => :mean_trade,
+        :scs_fails      => mean => :mean_scs_fails,
         :basin => (b -> count(==("A_none"), b))  => :n_A,
         :basin => (b -> count(==("B_local"), b)) => :n_B,
         :basin => (b -> count(==("C_global"), b)) => :n_C,
