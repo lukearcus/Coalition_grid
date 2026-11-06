@@ -1,17 +1,24 @@
 # =============================================================================
-# delta_G sweep on a high-complementarity subset of the REAL (EDF) dataset.
+# delta_G sweep on a high-complementarity subset — REAL (EDF) or SYNTHETIC
+# data, selected via the DATASET switch (see Configuration below).
 #
 # Real data: 70 buildings, 4766 steps (~49.6 days x 96 steps), prices are a
 # 672-step buy/sell series (data/edf_prices.csv). Mean pairwise opposition
 # density is ~11% overall, so subset/window choice matters far more than on
 # the synthetic data (~39%).
+#   Subset: small6 from experiments/search_subset_window.jl — PV producers
+#   (62, 28, 70) mixed with net consumers (37, 18, 40).
+#   Window: day37_best (start row 3553), the highest opposition-density
+#   window (0.254) found by the earlier search. NOTE: window slicing re-bases
+#   the series to k=1..96, so all windows use the same first-day price
+#   pattern; only load/PV profiles differ (see search_subset_window.jl).
 #
-# Subset: small6 from experiments/search_subset_window.jl — PV producers
-# (62, 28, 70) mixed with net consumers (37, 18, 40).
-# Window: day37_best (start row 3553), the highest opposition-density window
-# (0.254) found by the earlier search. NOTE: window slicing re-bases the
-# series to k=1..96, so all windows use the same first-day price pattern;
-# only load/PV profiles differ (see search_subset_window.jl).
+# Synthetic data (generate_synthetic_data.jl): 30 buildings across 10
+# archetypes, 672 steps (7 days x 96), ~39% mean pairwise complementarity.
+#   Subset: 3 staggered sellers (solar farm 1, coastal wind 25, hilltop wind
+#   28) + 3 buyers with distinct peaks (industrial 10, data center 16,
+#   residential 7).
+#   Windows: day0_weekday + day5_weekend.
 #
 # ============ Preflight gate ============
 # Before sweeping, the script computes all 15 pair utilities at k=1 (SoC=0)
@@ -31,18 +38,23 @@
 # MPC_optimiser.jl SCS_FAIL_COUNT).
 #
 # ============ Configuration (edit here or set via ENV vars) ============
+#   DATASET        (default "real")  "real" (EDF cleaned_data/) or
+#                                   "synthetic" (synthetic_data/)
 #   NUM_REPEATS    (default 10)  repeats per (window, delta_G)
 #   DELTA_G_POINTS (default 10)  log-spaced points from 0.1 to 10000
 #                                (plus delta_G=0 deterministic anchor)
+#   OUT_CSV / OUT_SUM             output paths (defaults per dataset; override
+#                                 for smoke tests so result files survive)
 #
 # ============ Known issue (worked around) ============
-# coal_MPC indexes buy/sell by b.id assuming id==position. The subset IDs
-# [62,28,70,...] would crash, so slice_window re-IDs buildings to 1..N.
-# Fix the indexing bug separately and this workaround can be dropped.
+# coal_MPC indexes buy/sell by b.id assuming id==position. Non-contiguous
+# subset IDs would crash, so slice_window re-IDs buildings to 1..N. Fix the
+# indexing bug separately and this workaround can be dropped.
 #
 # ============ Run ============
-#   julia --threads auto experiments/sweep_delta_G_subset.jl
-# (from repo root -- loaders read cleaned_data/ and data/ relative to cwd)
+#   julia --threads auto experiments/sweep_delta_G_subset.jl              # real
+#   DATASET=synthetic julia --threads auto experiments/sweep_delta_G_subset.jl
+# (from repo root -- loaders read cleaned_data//synthetic_data/ relative to cwd)
 # =============================================================================
 
 try
@@ -60,10 +72,39 @@ include("../Coalition.jl")
 include("../load_EMS_data.jl")
 
 # ---------- Configuration ----------
-# High-complementarity real-data subset ("small6" from
-# experiments/search_subset_window.jl): PV producers (62, 28, 70) mixed
-# with net consumers (37, 18, 40).
-const SUBSET_IDS = [62, 28, 70, 37, 18, 40]
+# Dataset switch: "real" (default) or "synthetic". Override per run:
+#   DATASET=synthetic julia --threads auto experiments/sweep_delta_G_subset.jl
+const DATASET = lowercase(get(ENV, "DATASET", "real"))
+
+if DATASET == "real"
+    # Real (EDF) data. Subset "small6" from search_subset_window.jl;
+    # window day37_best = highest opposition-density window found (0.254).
+    cfg = (label = "real (small6 @ day37_best)",
+           load = (70, 4766, ""),
+           subset = [62, 28, 70, 37, 18, 40],
+           windows = [("day37_best", 3553, 0.254)],
+           out_csv = "results/sweep_delta_G.csv",
+           out_sum = "results/sweep_delta_G_summary.txt")
+elseif DATASET == "synthetic"
+    # Synthetic data. Subset: staggered sellers + distinct-peak buyers; two
+    # windows (day 0 weekday, day 5 weekend).
+    cfg = (label = "synthetic ([1,10,16,25,28,7], day0+day5)",
+           load = (30, 672, "synthetic_data"),
+           subset = [1, 10, 16, 25, 28, 7],
+           windows = [("day0_weekday", 1, 0.0), ("day5_weekend", 481, 0.0)],
+           out_csv = "results/sweep_delta_G_synthetic.csv",
+           out_sum = "results/sweep_delta_G_synthetic_summary.txt")
+else
+    error("Unknown DATASET \"$DATASET\" (use \"real\" or \"synthetic\")")
+end
+
+# Derived config. OUT_CSV/OUT_SUM can be overridden (e.g. smoke tests
+# writing to /tmp so the committed result files are not clobbered).
+const SUBSET_IDS = cfg.subset
+const WINDOWS    = cfg.windows
+const OUT_CSV = get(ENV, "OUT_CSV", cfg.out_csv)
+const OUT_SUM = get(ENV, "OUT_SUM", cfg.out_sum)
+
 const num_builds = length(SUBSET_IDS)
 const max_coal_size = 2
 const num_ahead = 8
@@ -83,32 +124,18 @@ const delta_g_points = parse(Int, get(ENV, "DELTA_G_POINTS", "10"))
 # (length>=2 required by range(); the script guards against length=1.)
 const delta_G_values = [0.0; 10 .^ range(-1, 4; length=max(delta_g_points, 2))]
 
-# Window: (name, start_row, opposition density) from
-# search_subset_window.jl. day37_best = highest complementarity window found
-# (0.254 opposition density) vs 0.148 for day 0.
-const WINDOWS = [
-    ("day37_best", 3553, 0.254),
-]
-
 # Basin classification (relative to dec_avg, so it auto-calibrates to the
-# synthetic data's price/consumption scale). Thresholds are fractions of
+# active dataset's price/consumption scale). Thresholds are fractions of
 # |dec_avg|: benefit < 2% -> "A_none", < 8% -> "B_local", >= 8% -> "C_global".
 const BASIN_NONE_PCT  = 0.02
 const BASIN_LOCAL_PCT = 0.08
 
-# Output files (incremental writes survive a crash).
-#const OUT_CSV = "results/sweep_delta_G_synthetic.csv"
-#const OUT_SUM = "results/sweep_delta_G_synthetic_summary.txt"
-const OUT_CSV = "results/sweep_delta_G.csv"
-const OUT_SUM = "results/sweep_delta_G_summary.txt"
-
 # ---------- Load data and helpers ----------
-# Load all 70 real buildings (full 4766-step series) so the day37 window
-# (start row 3553) is reachable, then slice subset + window.
-println("Loading real data for 70 buildings (4766 steps)...")
-all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(70, 4766)
+# Load the full series for the active dataset, then slice subset + window.
+println("Loading $DATASET data ($(cfg.load[1]) buildings, $(cfg.load[2]) steps)...")
+all_buildings_full, energy_cost, energy_sale = MPC_load_from_CSV(cfg.load...)
 opt = MPC_optimiser(energy_cost', energy_sale')
-println("Loaded. num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
+println("Loaded. dataset=$DATASET ($(cfg.label))  num_repeats=$num_repeats  delta_G_points=$(length(delta_G_values))  windows=$(length(WINDOWS))")
 
 # Slice window AND re-ID buildings to 1..N (works around the b.id indexing bug).
 function slice_window(buildings, subset_ids, s, nsteps)
@@ -253,10 +280,10 @@ end # let done_runs
 
 # ---------- Summary ----------
 println("\n============================================================")
-println("Summary: subset=$(SUBSET_IDS)  num_repeats=$num_repeats")
+println("Summary: dataset=$DATASET ($(cfg.label))  subset=$(SUBSET_IDS)  num_repeats=$num_repeats")
 println("============================================================")
 open(OUT_SUM, "w") do io
-    println(io, "sweep_delta_G summary (real data, small6 @ day37_best)")
+    println(io, "sweep_delta_G summary (dataset=$DATASET: $(cfg.label))")
     println(io, "subset_ids = $(SUBSET_IDS)")
     println(io, "num_repeats = $num_repeats")
     println(io, "delta_G_values = $(delta_G_values)")

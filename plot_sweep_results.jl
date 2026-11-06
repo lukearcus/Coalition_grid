@@ -5,8 +5,35 @@ catch
     using CSV
 end
 
+# Dataset switch: matches experiments/sweep_delta_G_subset.jl.
+#   DATASET=synthetic julia plot_sweep_results.jl
+const DATASET = lowercase(get(ENV, "DATASET", "real"))
+
+if DATASET == "real"
+    csv_default = "sweep_delta_G.csv"
+    pdf_default = "sweep_analysis_julia.pdf"
+elseif DATASET == "synthetic"
+    csv_default = "sweep_delta_G_synthetic.csv"
+    pdf_default = "sweep_analysis_julia_synthetic.pdf"
+else
+    error("Unknown DATASET \"$DATASET\" (use \"real\" or \"synthetic\")")
+end
+# Optional overrides (e.g. smoke tests writing to /tmp). Absolute paths are
+# used as-is; relative names resolve under results/.
+const SWEEP_CSV = get(ENV, "SWEEP_CSV", csv_default)
+const OUT_PDF   = get(ENV, "OUT_PDF", pdf_default)
+const CSV_PATH  = isabspath(SWEEP_CSV) ? SWEEP_CSV : joinpath(@__DIR__, "results", SWEEP_CSV)
+const PDF_PATH  = isabspath(OUT_PDF) ? OUT_PDF : joinpath(@__DIR__, "results", OUT_PDF)
+
 # Read the CSV file
-df = CSV.read(joinpath(@__DIR__, "results", "sweep_delta_G.csv"), DataFrame)
+df = CSV.read(CSV_PATH, DataFrame)
+
+# Multi-window CSVs (synthetic has day0_weekday + day5_weekend) would be
+# silently averaged across windows by groupby(:delta_G); plot one window
+# only. Default = first window in the file; override via WINDOW.
+const WINDOW = get(ENV, "WINDOW", first(unique(df.window)))
+df = filter(:window => ==(WINDOW), df)
+println("Plotting DATASET=$DATASET window=$WINDOW from results/$SWEEP_CSV")
 
 # Set plotting backend
 gr()
@@ -119,6 +146,6 @@ p4 = sweep_plot(df_log, gdf, dg0, x_anchor, decentralized_cost, :num_iters, "ite
 
 # Combine plots
 plot(p1, p2, p3, p4, layout=(2, 2), size=(1100, 850))
-savefig(joinpath(@__DIR__, "results", "sweep_analysis_julia.pdf"))
+savefig(PDF_PATH)
 
-println("Plots saved to results/ directory")
+println("Plot saved to $PDF_PATH (DATASET=$DATASET, window=$WINDOW)")
