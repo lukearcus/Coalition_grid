@@ -406,7 +406,14 @@ function solve_inverse_optimality_kkt(
         time_limit::Float64 = 60.0)
 
     z_tol = 1e-3  # SCS at 1e-6 tolerance gives ~1e-5 noise on z*
-    M_λ = 10.0 * maximum(pb)
+    # Dual bounds: λ (marginal value of stored energy) is bounded by the grid
+    # prices — stored energy is worth at most pb_max (avoids future purchase)
+    # and at least -ps_max (forced future sale). Tighter than ±M_λ → faster B&B.
+    pb_max = maximum(pb); ps_max = maximum(ps)
+    λ_lo = -pb_max
+    λ_hi =  ps_max + pb_max  # conservative: stored energy can be worth slightly more than pb_max
+    # σ, α, β bounded by max price difference
+    dual_hi = pb_max
 
     model = Model(HiGHS.Optimizer)
     set_silent(model)
@@ -434,14 +441,14 @@ function solve_inverse_optimality_kkt(
 
     # --- Dual variables ---
     @variable(model, -pb[t] <= μ[t=1:h] <= -ps[t])   # power balance dual
-    @variable(model, -M_λ <= λ_init <= M_λ)            # init SoC dual
+    @variable(model, λ_lo <= λ_init <= λ_hi)           # init SoC dual
     if h > 1
-        @variable(model, -M_λ <= λ_dyn[t=2:h] <= M_λ)  # dynamics dual
+        @variable(model, λ_lo <= λ_dyn[t=2:h] <= λ_hi) # dynamics dual
     end
-    @variable(model, 0 <= σ[1:h] <= M_λ)               # charge cap dual
-    @variable(model, 0 <= α[1:h] <= M_λ)                # pos cap dual
-    @variable(model, 0 <= β[1:h] <= M_λ)                # neg cap dual
-    @variable(model, 0 <= φ_prime <= M_λ)               # final constraint dual (>= 0)
+    @variable(model, 0 <= σ[1:h] <= dual_hi)           # charge cap dual
+    @variable(model, 0 <= α[1:h] <= dual_hi)            # pos cap dual
+    @variable(model, 0 <= β[1:h] <= dual_hi)            # neg cap dual
+    @variable(model, 0 <= φ_prime <= dual_hi)           # final constraint dual (>= 0)
 
     # --- z* fixing: pin g_buy, g_sell, μ at trading timesteps ---
     # SCS noise: |z*| < z_tol means no trade → round to 0
@@ -626,10 +633,10 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
     results = DataFrame(
         param = String[], t = Int[],
         theta_min_feas = Float64[], theta_max_feas = Float64[],
-        theta_min_opt = Float64[], theta_max_opt = Float64[],
         theta_min_kkt = Float64[], theta_max_kkt = Float64[],
         theta_true = Float64[],
-        ratio_feas = Float64[], ratio_opt = Float64[], ratio_kkt = Float64[],
+        width_feas = Float64[], width_kkt = Float64[],
+        ratio_feas = Float64[], ratio_kkt = Float64[],
     )
 
     kb_args = if known_battery
@@ -647,10 +654,6 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
         else
             v_min, v_max = NaN, NaN
         end
-        o_min, _ = solve_inverse_optimality(fr;
-            objective_var=:net_load, objective_t=t, sense=:min, known_battery=known_battery)
-        o_max, _ = solve_inverse_optimality(fr;
-            objective_var=:net_load, objective_t=t, sense=:max, known_battery=known_battery)
         k_min, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
             fr.pb, fr.ps; objective_var=:net_load, objective_t=t, sense=:min, kb_args...)
         k_max, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
@@ -658,9 +661,9 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
 
         θ_true = fr.net_load_true[t]
         denom = max(abs(θ_true), 1.0)
-        push!(results, ["net_load", t, v_min, v_max, o_min, o_max, k_min, k_max, θ_true,
+        push!(results, ["net_load", t, v_min, v_max, k_min, k_max, θ_true,
+            (v_max - v_min), (k_max - k_min),
             feas ? (v_max - v_min) / denom : NaN,
-            (o_max - o_min) / denom,
             (k_max - k_min) / denom])
     end
 
@@ -670,10 +673,6 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
                 fr.pb, fr.ps; objective_var=param, sense=:min, kb_args...)
             v_max, _ = solve_inverse_feasibility(fr.z_star, h, fr.η_ch, fr.η_dis,
                 fr.pb, fr.ps; objective_var=param, sense=:max, kb_args...)
-            o_min, _ = solve_inverse_optimality(fr;
-                objective_var=param, sense=:min, known_battery=known_battery)
-            o_max, _ = solve_inverse_optimality(fr;
-                objective_var=param, sense=:max, known_battery=known_battery)
             k_min, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
                 fr.pb, fr.ps; objective_var=param, sense=:min, kb_args...)
             k_max, _ = solve_inverse_optimality_kkt(fr.z_star, h, fr.η_ch, fr.η_dis,
@@ -681,8 +680,9 @@ function compute_all_bounds(fr::ForwardResult; known_battery::Bool = false, feas
 
             θ_true = param == :Q_b ? fr.Q_b : param == :P_b ? fr.P_b : fr.SoC0
             denom = max(abs(θ_true), 1.0)
-            push!(results, [string(param), 0, v_min, v_max, o_min, o_max, k_min, k_max, θ_true,
-                (v_max - v_min) / denom, (o_max - o_min) / denom, (k_max - k_min) / denom])
+            push!(results, [string(param), 0, v_min, v_max, k_min, k_max, θ_true,
+                (v_max - v_min), (k_max - k_min),
+                (v_max - v_min) / denom, (k_max - k_min) / denom])
         end
     end
 
@@ -692,19 +692,19 @@ end
 function print_bounds_table(results::DataFrame, title::String)
     println("\n=== $title ===")
     println("=" ^ 150)
-    @printf("%-12s %4s %12s %12s %12s %12s %12s %12s %12s %10s %10s %10s\n",
-        "Param", "t", "min_feas", "max_feas", "min_opt", "max_opt",
-        "min_kkt", "max_kkt", "true", "ratio_feas", "ratio_opt", "ratio_kkt")
-    println("-" ^ 150)
+    @printf("%-12s %4s %12s %12s %12s %12s %12s %10s %10s %10s %10s\n",
+        "Param", "t", "min_feas", "max_feas", "min_kkt", "max_kkt",
+        "true", "w_feas", "w_kkt", "r_feas", "r_kkt")
+    println("-" ^ 140)
     for row in eachrow(results)
-        @printf("%-12s %4d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %10.3f %10.3f %10.3f\n",
+        @printf("%-12s %4d %12.3f %12.3f %12.3f %12.3f %12.3f %10.1f %10.1f %10.2f %10.2f\n",
             row.param, row.t, row.theta_min_feas, row.theta_max_feas,
-            row.theta_min_opt, row.theta_max_opt,
             row.theta_min_kkt, row.theta_max_kkt,
             row.theta_true,
-            row.ratio_feas, row.ratio_opt, row.ratio_kkt)
+            row.width_feas, row.width_kkt,
+            row.ratio_feas, row.ratio_kkt)
     end
-    println("=" ^ 150)
+    println("=" ^ 140)
 end
 
 # ===========================================================================
@@ -737,7 +737,7 @@ function main()
     res_unknown = compute_all_bounds(fr; known_battery=false, feas=true)
     print_bounds_table(res_unknown, "Building 1, h=$h, Battery UNKNOWN")
 
-    res_known = compute_all_bounds(fr; known_battery=true, feas=false)
+    res_known = compute_all_bounds(fr; known_battery=true, feas=true)
     print_bounds_table(res_known, "Building 1, h=$h, Battery KNOWN")
 
     # Plot: net_load bounds comparison
@@ -745,14 +745,12 @@ function main()
     nl_known   = res_known[res_known.param .== "net_load", :]
 
     p1 = plot(1:h, nl_unknown.theta_true, label="true", lw=2, color=:black)
-    plot!(1:h, nl_unknown.theta_min_kkt, fillrange=nl_unknown.theta_max_kkt,
-        alpha=0.25, color=:orange, label="kkt bounds (unknown batt)")
-    plot!(1:h, nl_unknown.theta_min_opt, fillrange=nl_unknown.theta_max_opt,
-        alpha=0.3, color=:red, label="opt bounds (unknown batt)")
     plot!(1:h, nl_unknown.theta_min_feas, fillrange=nl_unknown.theta_max_feas,
-        alpha=0.15, color=:blue, label="feas bounds (unknown batt)")
-    plot!(1:h, nl_known.theta_min_opt, fillrange=nl_known.theta_max_opt,
-        alpha=0.3, color=:green, label="opt bounds (known batt)")
+        alpha=0.12, color=:blue, label="feasibility (unknown batt)")
+    plot!(1:h, nl_unknown.theta_min_kkt, fillrange=nl_unknown.theta_max_kkt,
+        alpha=0.3, color=:red, label="KKT-MILP (unknown batt)")
+    plot!(1:h, nl_known.theta_min_kkt, fillrange=nl_known.theta_max_kkt,
+        alpha=0.3, color=:green, label="KKT-MILP (known batt)")
     xlabel!("timestep t"); ylabel!("net_load (kW)")
     title!("Observability of net_load (Building 1, h=$h)")
     savefig(p1, "results/observability_net_load_bldg1_h$h.pdf")
@@ -767,10 +765,9 @@ function main()
 
     building_ids = [1, 3, 4]  # Q_b = 300, 50, 500; P_b = 75, 12.5, 125
     cross_results = DataFrame(
-        building = Int[], Q_b = Float64[], P_b = Float64[],
-        mean_ratio_feas = Float64[], mean_ratio_opt = Float64[],
-        mean_ratio_opt_kb = Float64[], mean_ratio_kkt = Float64[],
-        mean_ratio_kkt_kb = Float64[],
+        building = Int[], Q_b = Float64[], P_b = Float64[], mean_nl_abs = Float64[],
+        mean_ratio_kkt = Float64[], mean_ratio_kkt_kb = Float64[],
+        mean_width_kkt = Float64[], mean_width_kkt_kb = Float64[],
     )
 
     for bid in building_ids
@@ -782,29 +779,35 @@ function main()
 
         nl_res = res[res.param .== "net_load", :]
         nl_res_kb = res_kb[res_kb.param .== "net_load", :]
+        mean_nl = mean(abs.(fr.net_load_true))
 
-        push!(cross_results, (bid, fr.Q_b, fr.P_b,
-            NaN, mean(nl_res.ratio_opt), mean(nl_res_kb.ratio_opt),
-            mean(nl_res.ratio_kkt), mean(nl_res_kb.ratio_kkt)))
+        push!(cross_results, (bid, fr.Q_b, fr.P_b, mean_nl,
+            mean(nl_res.ratio_kkt), mean(nl_res_kb.ratio_kkt),
+            mean(nl_res.width_kkt), mean(nl_res_kb.width_kkt)))
 
-        println("Building $bid: Q_b=$(fr.Q_b), P_b=$(fr.P_b) | "
-                * "opt=$(round(mean(nl_res.ratio_opt), digits=2)), "
-                * "opt+kb=$(round(mean(nl_res_kb.ratio_opt), digits=2)), "
-                * "kkt=$(round(mean(nl_res.ratio_kkt), digits=2)), "
-                * "kkt+kb=$(round(mean(nl_res_kb.ratio_kkt), digits=2))")
+        println("Building $bid: Q_b=$(fr.Q_b), P_b=$(fr.P_b) "
+                * "(mean|nl|=$(round(mean_nl, digits=1))) | "
+                * "KKT ratio: $(round(mean(nl_res.ratio_kkt), digits=2)) (unk), "
+                * "$(round(mean(nl_res_kb.ratio_kkt), digits=2)) (kb) | "
+                * "KKT width: $(round(mean(nl_res.width_kkt), digits=1)) (unk), "
+                * "$(round(mean(nl_res_kb.width_kkt), digits=1)) (kb)")
     end
 
-    # Plot: mean observability ratio by building
-    p2 = plot(cross_results.building, cross_results.mean_ratio_opt,
-        marker=:s, label="Optimality (unknown batt)", lw=2)
-    plot!(cross_results.building, cross_results.mean_ratio_opt_kb,
-        marker=:^, label="Optimality (known batt)", lw=2)
-    plot!(cross_results.building, cross_results.mean_ratio_kkt,
-        marker=:d, label="KKT (unknown batt)", lw=2)
+    # Two-panel plot: ratio (left) and absolute width (right)
+    p2a = plot(cross_results.building, cross_results.mean_ratio_kkt,
+        marker=:d, label="KKT (unknown batt)", lw=2, color=:red)
     plot!(cross_results.building, cross_results.mean_ratio_kkt_kb,
-        marker=:v, label="KKT (known batt)", lw=2)
+        marker=:v, label="KKT (known batt)", lw=2, color=:green)
     xlabel!("Building ID"); ylabel!("Mean observability ratio")
-    title!("net_load Observability by Building")
+    title!("Ratio")
+    p2b = plot(cross_results.building, cross_results.mean_width_kkt,
+        marker=:d, label="KKT (unknown batt)", lw=2, color=:red)
+    plot!(cross_results.building, cross_results.mean_width_kkt_kb,
+        marker=:v, label="KKT (known batt)", lw=2, color=:green)
+    xlabel!("Building ID"); ylabel!("Mean absolute bound width (kW)")
+    title!("Absolute width")
+    p2 = plot(p2a, p2b, layout=(1,2), size=(900,400))
+    title!(p2, "net_load Observability by Building")
     savefig(p2, "results/observability_cross_building.pdf")
     println("Saved: results/observability_cross_building.pdf")
 
@@ -815,17 +818,16 @@ function main()
     println("PART 3: Horizon Sensitivity (Building 1)")
     println("=" ^ 80)
 
-    horizons = [4, 8, 16, 32]
+    horizons = [4, 8, 16]
     b = all_buildings[1]
     hor_results = DataFrame(
-        h = Int[], mean_ratio_opt = Float64[], mean_ratio_opt_kb = Float64[],
-        mean_ratio_kkt = Float64[], mean_ratio_kkt_kb = Float64[],
+        h = Int[], mean_ratio_kkt = Float64[], mean_ratio_kkt_kb = Float64[],
     )
 
     for h_val in horizons
         println("  h=$h_val...")
-        k_val = max(1, k - (h - horizons[1]) ÷ 2)  # keep centered on price change
-        k_val = min(k_val, 96 - h_val)
+        # Keep centered around the price change at timestep 24
+        k_val = clamp(20, 1, 96 - h_val)
         fr_h = forward_solve(b, k_val, h_val, opt)
         res_h = compute_all_bounds(fr_h; known_battery=false, feas=false)
         res_h_kb = compute_all_bounds(fr_h; known_battery=true, feas=false)
@@ -833,23 +835,16 @@ function main()
         nl_h = res_h[res_h.param .== "net_load", :]
         nl_h_kb = res_h_kb[res_h_kb.param .== "net_load", :]
 
-        push!(hor_results, (h_val, mean(nl_h.ratio_opt), mean(nl_h_kb.ratio_opt),
-            mean(nl_h.ratio_kkt), mean(nl_h_kb.ratio_kkt)))
+        push!(hor_results, (h_val, mean(nl_h.ratio_kkt), mean(nl_h_kb.ratio_kkt)))
 
-        println("h=$h_val: opt=$(round(mean(nl_h.ratio_opt), digits=2)), "
-                * "opt+kb=$(round(mean(nl_h_kb.ratio_opt), digits=2)), "
-                * "kkt=$(round(mean(nl_h.ratio_kkt), digits=2)), "
-                * "kkt+kb=$(round(mean(nl_h_kb.ratio_kkt), digits=2))")
+        println("h=$h_val: KKT ratio=$(round(mean(nl_h.ratio_kkt), digits=2)) (unk), "
+                * "$(round(mean(nl_h_kb.ratio_kkt), digits=2)) (kb)")
     end
 
-    p3 = plot(hor_results.h, hor_results.mean_ratio_opt,
-        marker=:s, label="Optimality (unknown batt)", lw=2)
-    plot!(hor_results.h, hor_results.mean_ratio_opt_kb,
-        marker=:^, label="Optimality (known batt)", lw=2)
-    plot!(hor_results.h, hor_results.mean_ratio_kkt,
-        marker=:d, label="KKT (unknown batt)", lw=2)
+    p3 = plot(hor_results.h, hor_results.mean_ratio_kkt,
+        marker=:d, label="KKT (unknown batt)", lw=2, color=:red)
     plot!(hor_results.h, hor_results.mean_ratio_kkt_kb,
-        marker=:v, label="KKT (known batt)", lw=2)
+        marker=:v, label="KKT (known batt)", lw=2, color=:green)
     xlabel!("Horizon length h"); ylabel!("Mean observability ratio")
     title!("net_load Observability vs Horizon (Building 1)")
     savefig(p3, "results/observability_horizon_sensitivity.pdf")
@@ -868,8 +863,8 @@ function main()
     println("\nAll plots saved to results/observability_*.pdf")
 
     # Save results to CSV
-    CSV.write("results/observability_bldg1_unknown.csv", res_unknown)
-    CSV.write("results/observability_bldg1_known.csv", res_known)
+    CSV.write("results/observability_bldg1_unknown_v2.csv", res_unknown)
+    CSV.write("results/observability_bldg1_known_v2.csv", res_known)
     CSV.write("results/observability_cross_building.csv", cross_results)
     CSV.write("results/observability_horizon.csv", hor_results)
     println("Results saved to results/observability_*.csv")

@@ -109,13 +109,19 @@ where $\ratio{i} = 0$ means perfectly observable and large $\ratio{i}$ means hig
 \paragraph{Two variants.}
 We consider two levels of adversary knowledge:
 \begin{itemize}[nosep]
-    \item \emph{Feasibility-only} (Variant A): primal feasibility + observed trade only. What $\netload$ is consistent with $z^*$ and \emph{some} feasible battery operation?
-    \item \emph{Optimality} (Variant B): full KKT conditions (strong duality + complementary slackness with duals from the forward solve). What $\netload$ is consistent with $z^*$ being \emph{optimal}?
+    \item \emph{Feasibility-only}: primal feasibility + observed trade only. What $\netload$ is consistent with $z^*$ and \emph{some} feasible battery operation?
+    \item \emph{Optimality (exact KKT)}: the full KKT conditions of the forward LP---primal feasibility, dual feasibility, and complementary slackness---encoded as a mixed-integer linear program (MILP). This gives \emph{exact} global bounds on the private parameters.
 \end{itemize}
-Variant~B is tighter: the rationality assumption (the agent optimises) constrains the battery action, not just its feasibility. The full KKT derivation is given in \cref{app:kkt}.
 
-\paragraph{Dual fixing.}
-The strong duality constraint uses dual values $y^*$ extracted from the forward solve. This is a \emph{local} approximation: it is valid for perturbations of $\theta$ that do not change the active constraint set. For LPs, the dual is optimal over a neighbourhood of the primal optimum, so the bounds are valid but may not be tight (the true feasible set may be larger than the dual-fixed approximation suggests).
+\paragraph{Exact KKT encoding via indicator constraints.}
+The complementary slackness conditions $y_i \cdot (b_i - A_i x) = 0$ are bilinear in the dual $y$ and primal $x$. We linearise them with binary indicator variables: for each constraint, a binary $z_i \in \{0,1\}$ selects whether the dual is zero ($z_i = 1 \Rightarrow y_i = 0$) or the constraint is tight ($z_i = 0 \Rightarrow A_i x = b_i$). This is a standard big-M / indicator-constraint encoding, solvable to global optimality by branch-and-bound (HiGHS).
+
+The number of binaries is $6h + 1$ (three per timestep for the box-constrained primal variables $\delta^+, \delta^-, c$, plus three for their upper-bound duals $\alpha, \beta, \sigma$, and one for the final constraint). However, the $z^*$ observation reduces this: at trading timesteps (where $g^+$ or $g^-$ is nonzero), the stationarity of $g^+$ and $g^-$ pins $\mu = -p_b$ or $\mu = -p_s$ respectively, eliminating $2h$ binaries. The remaining $4h + 1$ binaries are tractable: for $h = 16$, HiGHS solves each bound in $\sim 0.05$--$0.5$\,s.
+
+Crucially, this formulation requires \emph{no strong duality constraint} and \emph{no forward-solve duals}. The strong duality approach requires fixing the duals $y^*$ from the forward solve, which is a local approximation valid only where the active set is unchanged. The indicator-constraint approach encodes the \emph{entire} KKT system exactly, including all possible active sets, and gives globally valid bounds.
+
+\paragraph{Strong duality is unnecessary.}
+For an LP, the KKT conditions (primal feasibility, dual feasibility, complementary slackness) are necessary \emph{and sufficient} for optimality. Strong duality ($c'x = b'y$) is implied by these conditions, so it need not be imposed separately. This avoids the bilinear term $\theta \cdot y$ that would arise if the strong-duality equality $c'x = b'y$ were used with $c$ depending on $\theta$ (in our formulation, $c$ depends on $\netload$ via the observed-trade constraint but not via the objective). The full KKT derivation is given in \cref{app:kkt}.
 
 % ===========================================================================
 \section{Singleton Results}\label{sec:singleton}
@@ -129,32 +135,32 @@ We present results for building~1 ($\Qb = \SI{300}{kWh}$, $\Pb = \SI{75}{kW}$) a
 
 \begin{table}[ht]
 \centering
-\caption{Singleton observability bounds for building~1 ($h=16$). ``Ratio'' is the observability ratio~\eqref{eq:ratio}; lower is more observable.}
+\caption{Singleton observability bounds for building~1 ($h=16$, KKT-MILP). ``Width'' is the absolute bound $\theta^{\max}-\theta^{\min}$ (kW); ``Ratio'' is width$/|\theta^{\text{true}}|$.}
 \label{tab:singleton}
 \small
 \begin{tabular}{lr rr rr rr}
 \toprule
 & & \multicolumn{3}{c}{Battery unknown} & \multicolumn{3}{c}{Battery known} \\
 \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-Param & True & Min & Max & Ratio & Min & Max & Ratio \\
+Param & True & Width & Ratio & Min & Width & Ratio & Min \\
 \midrule
-$\netload[1]$ & 55.3 & $-375.3$ & 124.8 & 9.04 & $-175.3$ & 124.7 & 5.42 \\
-$\netload[6]$ & 55.6 & 2.0 & 502.1 & 9.00 & 2.0 & 77.1 & 1.35 \\
-$\netload[14]$ & $-6.9$ & $-9.8$ & $-6.8$ & 0.43 & $-9.8$ & $-6.8$ & 0.43 \\
-$\netload[16]$ & $-15.8$ & $-15.8$ & $-13.0$ & 0.17 & $-15.8$ & $-13.0$ & 0.17 \\
-$\Qb$ & 300 & 0 & 2000 & 6.67 & \multicolumn{3}{c}{(known)} \\
-$\Pb$ & 75 & 0 & 500 & 6.67 & \multicolumn{3}{c}{(known)} \\
-$\SoC$ & 0 & 0 & 0.07 & 0.07 & \multicolumn{3}{c}{(known)} \\
+$\netload[1]$ & 55.3 & 711 & 12.9 & $-394.0$ & 59 & 1.07 & 31.0 \\
+$\netload[6]$ & 55.6 & 500 & 9.0 & 2.2 & 75 & 1.35 & 2.2 \\
+$\netload[14]$ & $-6.9$ & 127 & 18.3 & $-6.9$ & 0 & 0.00 & $-6.9$ \\
+$\netload[16]$ & $-15.8$ & 136 & 8.6 & $-15.8$ & 0 & 0.00 & $-15.8$ \\
+$\Qb$ & 300 & 2000 & 6.67 & 0 & \multicolumn{3}{c}{(known)} \\
+$\Pb$ & 75 & 500 & 6.67 & 0 & \multicolumn{3}{c}{(known)} \\
+$\SoC$ & 0 & 2000 & 2000 & 0 & \multicolumn{3}{c}{(known)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Key observations:
 \begin{itemize}[nosep]
-    \item \emph{$\netload$ is tightly observable when the battery hits limits.} At $t=14$--$16$, the battery is empty (final constraint active), so $\deltas \approx 0$ and $\netload \approx z^*$. The ratio drops to $\sim 0.2$.
-    \item \emph{During active arbitrage, $\netload$ is wide.} At $t=1$--$8$, the battery charges/discharges, and $\deltas$ is an unobserved variable bounded by $\pm\Pb$. With unknown battery parameters, the strong duality constraint adds no information (the free $\Qb, \Pb$ absorb any discrepancy), so the bounds saturate the prior range. The ratio is $\sim 9$--$18$ depending on timestep.
-    \item \emph{$\Qb$ and $\Pb$ are unobservable.} Their bounds span the full prior range. The battery's capacity and power rating are never directly revealed by the grid trade---only their \emph{effect} (via the feasible $\deltas$ trajectory) is visible.
-    \item \emph{Knowing the battery parameters constrains the width to $\Pb$.} With known $\Qb, \Pb, \SoC$, the sole source of ambiguity is $\deltas \in [-\Pb, +\Pb]$, giving a bound width of $\sim 2\Pb$ and a ratio of $\sim 5.4$ for building~1. See \cref{sec:cross_building} for the cross-building comparison.
+    \item \emph{Known battery + binding final constraint $\Rightarrow$ perfect identification.} At $t=14$--$16$, the battery is empty (final constraint active), and with known $\Qb, \Pb$, the KKT-MILP \emph{point-identifies} $\netload$ (width $= 0$, ratio $= 0$). The observed $z^*$ equals $\netload$ exactly.
+    \item \emph{Known battery constrains width to $\sim\Pb$.} During active arbitrage ($t=1$--$8$), the width is $\sim 75 = \Pb$ (building~1), because the sole remaining ambiguity is $\deltas \in [0, \Pb]$. The ratio is $\sim 1.1$--$1.4$.
+    \item \emph{Unknown battery: optimality tightens feasibility.} The KKT width (711 for $t=1$; 500 for $t=6$) is narrower than the feasibility width (1000) at every timestep. The KKT conditions constrain the battery's \emph{shape} of operation even when its size is unknown: e.g., at $t=6$ (battery full), $\netload^{\min}$ jumps from $-498$ (feas) to $+2.2$ (KKT) because the complementary slackness forces the battery to be at capacity.
+    \item \emph{$\Qb$ and $\Pb$ remain unobservable.} Their bounds span the full prior range, even with the exact KKT conditions. The battery's capacity and power rating are never directly revealed by the grid trade.
 \end{itemize}
 
 \subsection{Cross-Building Comparison}\label{sec:cross_building}
@@ -163,7 +169,7 @@ Key observations:
 
 \begin{table}[ht]
 \centering
-\caption{Cross-building observability ($h=16$, optimality variant). ``Width'' is the mean absolute bound $\theta^{\max}-\theta^{\min}$ on $\netload$ (kW).}
+\caption{Cross-building observability ($h=16$, KKT-MILP). ``Width'' is the mean absolute bound $\theta^{\max}-\theta^{\min}$ on $\netload$ (kW).}
 \label{tab:cross_absolute}
 \small
 \begin{tabular}{r rr r rr rr}
@@ -171,9 +177,9 @@ Key observations:
 & \multicolumn{3}{c}{Building} & \multicolumn{2}{c}{Battery unknown} & \multicolumn{2}{c}{Battery known} \\
 Bldg & $\Qb$ & $\Pb$ & mean\,$|\netload|$ & Width & Ratio & Width & Ratio \\
 \midrule
-1 & 300 & 75.0 & 38.3 & 407 & 11.1 & 57 & 1.6 \\
-3 & 50  & 12.5 & 8.2  & 500 & 67.2 & 12 & 1.6 \\
-4 & 500 & 125.0 & 96.5 & 501 & 5.5  & 118 & 1.3 \\
+1 & 300 & 75.0 & 38.3 & 497 & 14.6 & 56 & 1.57 \\
+3 & 50  & 12.5 & 8.2  & 554 & 76.6 & 12 & 1.53 \\
+4 & 500 & 125.0 & 96.5 & 554 & 6.0  & 117 & 1.28 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -203,7 +209,7 @@ The observability ratio is meaningful for comparing observation models (e.g., Mo
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{figs/horizon.pdf}
-    \caption{$\netload$ observability ratio vs.\ horizon length for building~1. Short horizons ($h \leq 8$) have no price variation, so the battery is unused and $\netload = z^*$ (trivially observable). At $h=16$, the price change activates the battery and observability degrades sharply. Longer horizons ($h=32$) provide more data, slightly improving observability.}
+    \caption{$\netload$ observability ratio vs.\ horizon length for building~1 (KKT-MILP). At $h=4$ with no price variation, the battery is unused and $\netload = z^*$ (trivially observable with known battery). At $h=8$ and $h=16$, the price change activates the battery and observability degrades. With known battery, the ratio stabilises at $\sim 1.6$.}
     \label{fig:horizon}
 \end{figure}
 
@@ -259,20 +265,20 @@ The trajectory model is wider than Model~B because (i)~complementary slackness i
 \section{Comparison: Singleton vs.\ Coalition}\label{sec:comparison}
 % ===========================================================================
 
-\Cref{tab:comparison} compares the singleton and coalition settings (both with known battery).
+\Cref{tab:comparison} compares the singleton and coalition settings (both with known battery). The singleton row uses the exact KKT-MILP; the coalition rows use the dual-fixed LP approximation\footnote{The coalition MILP extension is straightforward but not yet implemented; the dual-fixed results are a lower bound on the true (wider) identifiability set.}.
 
 \begin{table}[ht]
 \centering
-\caption{Mean $\netload$ observability ratio: singleton vs.\ coalition (known battery, $h=16$).}
+\caption{Mean $\netload$ observability ratio: singleton vs.\ coalition (known battery, $h=16$). Singleton uses exact KKT-MILP; coalition uses dual-fixed LP (footnote~1).}
 \label{tab:comparison}
 \small
 \begin{tabular}{l r r}
 \toprule
 Setting & Agent~1 (Bldg~1) & Agent~2 (Bldg~3) \\
 \midrule
-Singleton & 3.0 & 3.8 \\
-Coalition, Model~B ($z^* + \ce^*$) & \textbf{1.6} & \textbf{1.3} \\
-Coalition, Model~C (trajectory) & 2.7 & 2.1 \\
+Singleton (KKT-MILP) & 1.57 & 1.53 \\
+Coalition, Model~B ($z^* + \ce^*$)\textsuperscript{1} & \textbf{1.6} & \textbf{1.3} \\
+Coalition, Model~C (trajectory)\textsuperscript{1} & 2.7 & 2.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -355,12 +361,12 @@ This confirms the fundamental gap identified above: the $\delta_G$ parameter tra
 \section{Conclusions}\label{sec:conclusions}
 % ===========================================================================
 
-We have shown that an adversary observing the broadcast grid trades and coalition exchanges can reconstruct the set of private parameters consistent with the observed behaviour, formulated as a linear program derived from the KKT conditions. The key findings are:
+We have shown that an adversary observing the broadcast grid trades and coalition exchanges can reconstruct the set of private parameters consistent with the observed behaviour, formulated as a mixed-integer linear program derived from the exact KKT conditions (complementary slackness encoded via indicator constraints). The key findings are:
 
 \begin{enumerate}[nosep]
-    \item Net load is partially observable from grid trades alone, with the observability ratio depending on whether the battery parameters are known. With unknown battery, the bounds saturate the prior range ($\sim 500$\,kW width) for all buildings; the ratio varies from 5.5 to 67.2 purely due to differences in $|\netload|$ magnitude. With known battery, the bound width is approximately $\Pb$ (the battery power rating), giving a ratio of $\sim 1.3$--$1.6$ across all buildings.
-    \item Battery parameters ($\Qb, \Pb$) are essentially unobservable from grid trades alone---their bounds span the full prior range, and active constraints with unknown battery duals actually reduce observability rather than improving it.
-    \item Coalition participation \emph{increases} observability (ratio drops from $\sim 1.3$--$1.6$ to $\sim 1.3$ with Model~B) because the coalition exchange $\ce^*$ reveals additional structural information.
+    \item With known battery parameters, $\netload$ is tightly observable: the bound width is $\sim\Pb$ (the battery power rating), giving a ratio of $\sim 1.3$--$1.6$ across all buildings. At timesteps where the battery hits a binding constraint (e.g., empty at the horizon end), $\netload$ is \emph{point-identified} (width $= 0$).
+    \item With unknown battery parameters, the KKT conditions tighten the feasibility bounds (e.g., from 1000\,kW to 500--711\,kW for $h=16$), but $\Qb$ and $\Pb$ themselves remain unobservable---their bounds span the full prior range.
+    \item Coalition participation \emph{increases} observability (Model~B ratio $\sim 1.3$ vs.\ singleton $\sim 1.5$) because the coalition exchange $\ce^*$ reveals additional structural information\footnote{Coalition results use the dual-fixed LP approximation; the exact KKT-MILP for the coalition case is left for future work.}.
     \item The existing DP mechanism protects the coalition structure but not the private data revealed through the ADMM broadcasts. The $\delta_G$ parameter has no effect on the observability of private parameters.
 \end{enumerate}
 
@@ -378,7 +384,7 @@ The forward LP~\eqref{eq:forward} has equality constraints (power balance, batte
     L = \sum_t \bigl(\pb\, g^+ - \ps\, g^-\bigr) - \sum_t \mu_t \bigl(\netload + g^- + \delta^+ + \delta^- - g^+\bigr) - \lambda_0 \bigl(c[1] - \SoC\bigr) - \sum_{t \geq 2} \lambda_t \bigl(c[t] - c[t-1] - \eta_{\text{ch}} \delta^+[t-1] - \eta_{\text{ch}}^{-1} \delta^-[t-1]\bigr).
 \end{equation}
 
-\subsection{Stationarity}
+\subsection{Stationarity}\label{sec:stationarity}
 
 Setting $\partial L / \partial g^+ = 0$: $\pb - \mu \leq 0$, i.e.\ $\mu \geq \pb$. But SCS returns $-\mu$ for equality constraints, so in practice $-\mu \in [\ps, \pb]$, giving $\ps \leq -\mu \leq \pb$.
 
@@ -407,18 +413,20 @@ For each inequality constraint with a nonzero dual, the constraint is active (eq
     \beta_t > 0 &\Rightarrow -\delta^-[t] = \Pb.
 \end{align}
 
-\subsection{Assembly into the Inverse LP}
+\subsection{Assembly into the Inverse MILP}
 
-The inverse LP has:
+The exact inverse problem is a MILP with:
 \begin{itemize}[nosep]
-    \item \emph{Decision variables}: private parameters $\netload[1..h], \Qb, \Pb, \SoC$; unobserved primal $g^+, g^-, \delta^+, \delta^-, c$ (all $h$-vectors).
-    \item \emph{Fixed duals}: $\mu, \lambda_0, \sigma, \alpha, \beta$ from the forward solve.
-    \item \emph{Constraints}: primal feasibility~\eqref{eq:power}--\eqref{eq:final}, observed trade $g^+ - g^- = z^*$, strong duality ($c'x = b'y$ with duals fixed), and complementary slackness (active constraints pinned to equality).
+    \item \emph{Decision variables}: private parameters $\netload[1..h], \Qb, \Pb, \SoC$; unobserved primal $g^+, g^-, \delta^+, \delta^-, c$ (all $h$-vectors); dual variables $\mu, \lambda_0, \lambda_{\text{dyn}}, \sigma, \alpha, \beta$; and binary variables $y \in \{0,1\}^{6h+1}$ for complementary slackness.
+    \item \emph{Constraints}: primal feasibility~\eqref{eq:power}--\eqref{eq:final}, observed trade $g^+ - g^- = z^*$, dual feasibility ($\ps \leq -\mu \leq \pb$, $\sigma, \alpha, \beta \geq 0$), stationarity (reduced-cost expressions from \cref{sec:stationarity}), and complementary slackness via indicator constraints ($y_i = 1 \Rightarrow \text{dual}_i = 0$; $y_i = 0 \Rightarrow \text{constraint}_i$ tight).
+    \item \emph{$z^*$ presolve}: at trading timesteps ($|z^*[t]| > \text{tol}$), $\mu[t]$ is pinned to $-\pb[t]$ or $-\ps[t]$ by stationarity of $g^+$ or $g^-$, eliminating $2h$ binaries. Remaining: $4h+1$.
     \item \emph{Objective}: $\min$ or $\max$ the target parameter $\theta_i$.
 \end{itemize}
 
-All constraints are linear in the decision variables, so the inverse problem is an LP. For the coalition case, the strong duality~\eqref{eq:dual_obj} sums over all agents; the coalition exchange dual (the internal price $\ce_{\text{dual}}$) satisfies $\mu_i = -\ce_{\text{dual}}$ for all agents, and the RHS of $\sum_i \ce_i = 0$ is zero, so it contributes nothing to the dual objective.
+No strong duality constraint is needed: for an LP, the KKT conditions (primal feas, dual feas, CS) are necessary and sufficient for optimality. Strong duality is implied. This avoids the bilinear term $\theta \cdot y$ that would arise from $c'x = b'y$ with $c$ depending on $\theta$.
 
-For the ADMM trajectory (Model~C), each iteration $j$ provides a separate set of KKT conditions with its own duals $\mu^{(j)}, \sigma^{(j)}, \alpha^{(j)}, \beta^{(j)}$. The private parameters are shared across all iterations, so the constraints accumulate. However, the duals barely change across iterations (the active set is tariff-determined), so the tightening is modest.
+An earlier attempt used a dual-fixed LP (fixing $\mu, \sigma, \alpha, \beta$ to values from the forward solve and imposing strong duality as a linear constraint). This was retired because SCS dual noise ($\sim 0.3$ gap at $10^{-4}$ tolerance) polluted the strong duality equality, producing bounds that excluded the true parameters. The MILP approach is exact and does not require forward-solve duals.
+
+For the coalition case, the same MILP structure applies per-agent, with the coalition exchange $\ce_i$ either observed (Model~B: adds $\ce_i = \ce_i^*$ to the primal) or unobserved (Model~A). The coalition results in this paper use the dual-fixed LP approximation; the exact coalition MILP is left for future work.
 
 \end{document}

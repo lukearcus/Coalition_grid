@@ -403,10 +403,14 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 			if liar_id !== nothing && lie_level != "truthful"
 				liar_pos = findfirst(b -> b.id == liar_id, bs)
 				if liar_pos !== nothing
-					# What the liar would otherwise buy from the grid at step k
+					# Total energy the liar can profitably absorb at internal price <
+					# buy price: direct consumption need (cons - prod) plus battery
+					# headroom, capped by the looser of the single-step charge-rate
+					# limit (max_flow) and the remaining capacity (max_store - SoC).
 					liar_need = max(0.0, bs[liar_pos].pred_cons[k,1]
 					                      - bs[liar_pos].pred_prod[k,1]
-					                      - bs[liar_pos].SoC[k])
+					                      + max(max_flow(bs[liar_pos]),
+					                            max_store(bs[liar_pos]) - bs[liar_pos].SoC[k]))
 					# Spare energy across partners (only what they can actually spare)
 					surplus = sum(max(0.0, bs[j].pred_prod[k,1] + bs[j].SoC[k] - bs[j].pred_cons[k,1])
 					              for j in 1:num_builds if j != liar_pos)
