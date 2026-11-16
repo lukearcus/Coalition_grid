@@ -33,7 +33,7 @@ using Random
 using Statistics
 
 # ---- Configuration (edit these) ----
-const NUM_BUILDS      = 8
+const NUM_BUILDS      = 70
 const MAX_COAL        = 4          # 4 keeps ADMM solves tractable (6 is very slow)
 const NUM_STEPS       = 48         # 12 hours (96 = full day; 48 includes k=40 where merges happen)
 const NUM_LOOK_AHEAD  = 8          # MPC horizon
