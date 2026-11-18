@@ -1,0 +1,1803 @@
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 544, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 483, num_vars: 490
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 414, num_vars: 420
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 345, num_vars: 350
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 276, num_vars: 280
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 207, num_vars: 210
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 138, num_vars: 140
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 69, num_vars: 70
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 544, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 483, num_vars: 490
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 414, num_vars: 420
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 345, num_vars: 350
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 276, num_vars: 280
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 207, num_vars: 210
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 138, num_vars: 140
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 69, num_vars: 70
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 544, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 552, num_vars: 560
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 483, num_vars: 490
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 414, num_vars: 420
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 345, num_vars: 350
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 276, num_vars: 280
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 207, num_vars: 210
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 138, num_vars: 140
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 69, num_vars: 70
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 40, num_vars: 48
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 40, num_vars: 48
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 56, num_vars: 64
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 40, num_vars: 48
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 7, num_vars: 14
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 28
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 6, num_vars: 12
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 18, num_vars: 24
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 5, num_vars: 10
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 20
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 4, num_vars: 8
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 4, num_vars: 8
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 3, num_vars: 6
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 9, num_vars: 12
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 2, num_vars: 4
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 6, num_vars: 8
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 1, num_vars: 2
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 3, num_vars: 4
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 24, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 8, num_vars: 16
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+Error in LDL factorization when computing the nonzero elements. The problem seems to be non-convex.
+factor_status: 0, num_vars: 32
+Error in LDL initial factorization.
+ERROR: init_lin_sys_work failure
+ERROR: missing ScsWork, ScsSolution or ScsInfo input
+========================================================================
+Benchmark: 70 buildings, 48 timesteps, horizon=8, max_coal=4
+========================================================================
+
+Method                              cost          time (mean ± std)   iters/step
+------------------------------------------------------------------------
+  Decentralised (no coop)           cost=   1610.82  time=  30.09s ±  8.93s  iters/step= 70.00  (n=3)
+  Centralised (grand coalition)     cost=   1765.93  time=2431.75s ± 30.08s  iters/step=457.58  (n=3)
+  Limited-info (non-DP)             cost=   1528.60  time= 159.87s ±  2.10s  iters/step=583.50  (n=3)
+  Full-info greedy                  cost=   1071.70  time=34150.69s ± 114.84s  iters/step=106735.88  (n=3)
+  WARNING: DP (delta_G=100.0, seed=42) cost drifted across reps (std=4.3180e+01); solver may be nondeterministic
+  DP (delta_G=100.0, seed=42)       cost=   1523.96  time= 308.93s ± 29.02s  iters/step=1319.17  (n=3)
+  WARNING: DP (delta_G=100.0, seed=1) cost drifted across reps (std=4.3494e+00); solver may be nondeterministic
+  DP (delta_G=100.0, seed=1)        cost=   1474.12  time= 362.73s ±  6.64s  iters/step=1548.65  (n=3)
+  WARNING: DP (delta_G=100.0, seed=7) cost drifted across reps (std=7.7829e+01); solver may be nondeterministic
+  DP (delta_G=100.0, seed=7)        cost=   1482.67  time= 313.62s ± 36.36s  iters/step=1336.94  (n=3)
+
+Coalition structure at k=40 (non-DP):
+  [7, 55]
+  [23, 51]
+  [45, 67]
+  [39, 56]
+  [17, 32]
+  [33, 49]
+  [27, 35]
+  [48, 70]
+  [16, 54]
+  [26, 46]
+  [38, 47]
+  [40, 63]
+  [13, 62]
+  [59, 65]
+  [28, 69]
+  [6, 22]
+  [31]
+  [64]
+  [11, 57]
+  [20, 60]
+  [34, 52]
+  [58, 66]
+  [24, 25]
+  [10, 19]
+  [43, 44]
+  [29]
+  [30]
+  [1, 41]
+  [37, 42]
+  [8, 21]
+  [15, 53]
+  [36]
+  [68]
+  [4]
+  [12]
+  [3]
+  [18]
+  [5, 50]
+  [9, 14]
+  [2]
+  [61]
+
+====================================
+CPU Time used: 31:24:56
+CPU Percent: 97%
+Memory usage: 2729632kb
+Approx Power usage: 0.37679999999999997
+Walltime usage: 31:32:20
+
+====================================
