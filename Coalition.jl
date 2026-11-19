@@ -272,6 +272,15 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
         poss_coal_vals = Dict()
         poss_coal_vars = Dict()
         for c in poss_coals
+            # P5.2: Skip pairs whose combined size exceeds max_coal_size.
+            # These can never be merged (the size check at line ~301 rejects
+            # them), so evaluating them wastes a solve AND, at ill-conditioned
+            # steps, is the source of the num_vars:48/64 LDL failures (4+4=8
+            # and 2+4=6 building coalitions). This mirrors the DP code's
+            # size-feasibility filter.
+            if length(agent_ids(c[1])) + length(agent_ids(c[2])) > max_coal_size
+                continue
+            end
             poss_coal_vec = Vector()
             append!(poss_coal_vec, c[1], c[2])
             coal_res = single_optimise_ADMM(opt, buildings[poss_coal_vec], k,num_look_ahead,receding_horizon)
@@ -291,6 +300,11 @@ function bottom_up_full_info(buildings::Vector{MPC_Building}, max_coal_size::Int
             poss_coal_vals[c] = -((coal_vals[c_1])+(coal_vals[c_2]))+ obj_val #added poss_coal_vals c[1] c[2] - joint to better discriminate
             # poss_coal_vals[c] = -(objective_value(res[c[1]])+objective_value( res[c[2]]))+ sum(obj_val) #added res c[1] c[2] - joint to better discriminate
         end
+        # P5.2: Reject NaN merge scores — a failed solve returns NaN, and
+        # sort! with NaN produces an arbitrary order (NaN comparisons are
+        # false), so NaN-scored pairs can be picked "first" as best merges,
+        # enacting NaN coalition plans. Drop them before sorting.
+        poss_coal_vals = Dict(c => v for (c, v) in poss_coal_vals if !isnan(v))
         sorted_coal_vals = sort!(collect(poss_coal_vals), by=last)
         new_agents = Vector()
         coaled_agents = Vector()

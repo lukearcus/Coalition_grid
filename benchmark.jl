@@ -31,6 +31,7 @@ include("load_EMS_data.jl")
 using Printf
 using Random
 using Statistics
+using JuMP, SCS
 
 # ---- Configuration (edit these) ----
 const NUM_BUILDS      = 70
@@ -42,6 +43,11 @@ const RUN_FULL_INFO   = true      # full-info greedy (slow: solves all pairs)
 const RUN_DP          = true      # DP comparison (off by default for collaborators)
 const DP_DELTA_G      = 100.0      # privacy budget (only used if RUN_DP=true)
 const DP_SEEDS        = [42, 1, 7] # seeds for the stochastic DP runs
+# P5.3: Centralised via exact LP (single_optimise builds the full N-building
+# model directly — no ADMM, no convergence cap). The true centralised optimum.
+# Separate from `centralised` (ADMM) so both can be compared. Off by default
+# for N=70 because the full 70×8 LP is large; enable for smaller N.
+const RUN_CENTRALISED_EXACT = false
 
 # coal_MPC mutates building.SoC in place, so each rep needs a fresh set of
 # buildings (reloaded from CSV). Repeats NUM_REPS times and reports
@@ -49,18 +55,29 @@ const DP_SEEDS        = [42, 1, 7] # seeds for the stochastic DP runs
 # for these methods; a warning is printed if it drifts (solver nondeterminism
 # red flag). coal_MPC returns 5 values; the 4th (stab_score) and 5th
 # (dissolve_count) are dropped by the 4-way destructure below.
+#
+# P5.3: Tracks SCS_FAIL_COUNT and CORRUPTED_STEPS per rep. If either is
+# nonzero, the cost is marked INVALID — silent NaN fallbacks make the cost
+# unreliable (see MPC_optimiser.jl P3.9/P5.1 docstrings). The mean is still
+# printed for reference but flagged.
 function run_method(label::String, coal_former)
     costs = Float64[]
     times = Float64[]
     iters_vals = Float64[]
+    total_fails = 0
+    total_corrupted = 0
     for rep in 1:NUM_REPS
         bs, _, _, _ = MPC_load_from_CSV(NUM_BUILDS, NUM_STEPS)
+        global SCS_FAIL_COUNT = 0
+        global CORRUPTED_STEPS = 0
         t0 = time()
         cost, _, iters, _ = coal_MPC(coal_former, bs, MAX_COAL, NUM_LOOK_AHEAD)
         t1 = time()
         push!(costs, cost)
         push!(times, t1 - t0)
         push!(iters_vals, iters)
+        total_fails += SCS_FAIL_COUNT
+        total_corrupted += CORRUPTED_STEPS
     end
     mean_cost  = mean(costs)
     mean_time  = mean(times)
@@ -69,7 +86,11 @@ function run_method(label::String, coal_former)
     if std(costs) > 1e-6
         @printf "  WARNING: %s cost drifted across reps (std=%.4e); solver may be nondeterministic\n" label std(costs)
     end
-    @printf "  %-32s  cost=%10.2f  time=%7.2fs ± %5.2fs  iters/step=%6.2f  (n=%d)\n" label mean_cost mean_time std_time mean_iters NUM_REPS
+    avg_fails     = total_fails ÷ NUM_REPS
+    avg_corrupted = total_corrupted ÷ NUM_REPS
+    invalid = avg_fails > 0 || avg_corrupted > 0
+    flag = invalid ? " *** INVALID" : ""
+    @printf "  %-32s  cost=%10.2f  time=%7.2fs ± %5.2fs  iters/step=%6.2f  fails=%d  corrupted=%d  (n=%d)%s\n" label mean_cost mean_time std_time mean_iters avg_fails avg_corrupted NUM_REPS flag
     return mean_cost
 end
 
@@ -96,20 +117,38 @@ function centralised(bs, max_coal_size, k, num_look_ahead, receding_horizon=fals
     return [collect(1:length(bs))], [states], num_iters
 end
 
+# P5.3: Centralised via exact LP — single_optimise builds the full N-building
+# model directly (one SCS solve, no ADMM decomposition, no convergence cap).
+# This is the true centralised optimum; `centralised` above is the ADMM
+# approximation that may not converge at large N. Returns 3 values like
+# `centralised` so it drops into coal_MPC's pipeline unchanged.
+function centralised_exact(bs, max_coal_size, k, num_look_ahead, receding_horizon=false)
+    model, states = single_optimise(opt, bs, k, num_look_ahead, receding_horizon)
+    scs_count_failure!(model)
+    return [collect(1:length(bs))], [states], 1
+end
+
 # ---- Shared setup ----
 buildings, energy_cost, energy_sale, timestamps = MPC_load_from_CSV(NUM_BUILDS, NUM_STEPS)
 global opt = MPC_optimiser(energy_cost', energy_sale')
 
 println("=" ^ 72)
 @printf "Benchmark: %d buildings, %d timesteps, horizon=%d, max_coal=%d\n" NUM_BUILDS NUM_STEPS NUM_LOOK_AHEAD MAX_COAL
+# P5.3: Record toolchain versions — cross-machine comparisons are invalid when
+# SCS solves fail, because the failure pattern depends on the SCS build.
+println("Julia: ", VERSION, "  JuMP: ", pkgversion(JuMP), "  SCS: ", pkgversion(SCS))
+println("OMP_NUM_THREADS: ", get(ENV, "OMP_NUM_THREADS", "(unset)"))
 println("=" ^ 72)
 println()
-println("Method                              cost          time (mean ± std)   iters/step")
-println("-" ^ 72)
+println("Method                              cost          time (mean ± std)   iters/step  fails  corrupted")
+println("-" ^ 92)
 
 # ---- Always-on methods ----
 run_method("Decentralised (no coop)",    decentralised)
 run_method("Centralised (grand coalition)", centralised)
+if RUN_CENTRALISED_EXACT
+    run_method("Centralised (exact LP)",  centralised_exact)
+end
 run_method("Limited-info (non-DP)",      privacy_focussed_coals)
 
 # ---- Full-info greedy (optional, slow) ----

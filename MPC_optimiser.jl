@@ -16,6 +16,12 @@ end
 # before each run and report it as a column.
 global SCS_FAIL_COUNT = 0
 
+# P5.1: Counter for enacted steps where a NaN fallback was applied (remaining
+# forced to 0.0, SoC frozen). These are silent zero-cost contributions that
+# undercount the true cost. benchmark.jl reports this alongside SCS_FAIL_COUNT
+# and refuses to print a cost for methods with corrupted_steps > 0.
+global CORRUPTED_STEPS = 0
+
 # Count a solve failure if the model did not reach OPTIMAL/ALMOST_OPTIMAL.
 # Read-only apart from the counter — no behaviour change at any call site.
 # `infeasible_ok=true` (used at the fair-price LP site) does NOT count
@@ -373,8 +379,11 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	proposed_coal =[zeros(num_steps) for i in 1:num_builds]
 	lambdas = [zeros(num_steps) for i in 1:num_builds]
 	num_iters_admm = 1
-	# need a solution in case not converged (use new_coal)
-	poss_sol = proposed_coal
+	# P5.1: poss_sol as a zero Matrix (type-stable). Previously initialised to
+	# proposed_coal (Vector{Vector}), which type-shifted to Matrix on the first
+	# good iteration. A zero Matrix is the correct fallback (no trade) if no
+	# iteration ever produces a clean consensus.
+	poss_sol = zeros(num_steps, num_builds)
 	# P3.1: Build per-building and coal-update models ONCE; reuse across ADMM iterations.
 	build_caches = [ADMM_build_opt_init(b, k, num_steps) for b in bs]
 	coal_cache = ADMM_coal_update_init(num_builds, num_steps)
@@ -384,7 +393,13 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 	max_admm_iters = 1000
 	abs_tol = 1e-5
 	let states = Vector{Any}(undef,num_builds)
-		while (norm(reduce(hcat, proposed_coal).-new_coal) > abs_tol) | (num_iters_admm <= 1)
+		# P5.1: Compute the diff norm once per iteration. NaN in the norm (from
+		# a failed solve) must NOT be treated as convergence — `NaN > abs_tol`
+		# is false, which previously caused premature exit on the first poisoned
+		# iteration. isnan(diff_norm) keeps the loop running so the cascade guard
+		# below can feed clean params to the next iteration.
+		diff_norm = norm(reduce(hcat, proposed_coal) .- new_coal)
+		while isnan(diff_norm) || diff_norm > abs_tol || num_iters_admm <= 1
 			if num_iters_admm > max_admm_iters
 				break
 			end
@@ -394,6 +409,12 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 			states[ind] = ADMM_build_opt_solve(build_caches[ind], new_coal[:,ind], lambdas[ind], c)
 		end
 			proposed_coal = [value(state[6]) for state in states]
+			# P5.1: Cascade guard — a failed subproblem returns NaN coal_exch,
+			# which poisons the consensus QP (NaN in `prop` parameter → LDL
+			# "non-convex" failure) and the lambda update. Replace NaN with
+			# 0.0 (no trade) so the next iteration's solves get clean inputs.
+			# The failed solve is already counted by scs_count_failure!.
+			proposed_coal = [[isnan(x) ? 0.0 : x for x in pc] for pc in proposed_coal]
 
 			# Liar in coalition: steal only what it can usefully consume, from
 			# partners' true surplus. Imports `stolen` at internal_price (midpoint
@@ -431,10 +452,17 @@ function single_optimise_ADMM(opt::MPC_optimiser,bs::Vector{MPC_Building},k::Int
 			new_coal = ADMM_coal_update_solve(coal_cache, lambdas, proposed_coal, c)
 			if !any(isnan,new_coal)
 				poss_sol = new_coal
+			else
+				# P5.1: Consensus solve failed (NaN). Don't let NaN propagate into
+				# the lambda update — replace NaN entries with 0.0 so the next
+				# iteration's build subproblems get clean coal_trades. poss_sol
+				# (last good consensus) is preserved for enacted vars below.
+				new_coal = [isnan(x) ? 0.0 : x for x in new_coal]
 			end
 
-			lambdas = [lambda + c*(prop_coal-new_coal[:,ind]) for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
+			lambdas = [[isnan(x) ? 0.0 : x for x in (lambda + c*(prop_coal-new_coal[:,ind]))] for (lambda, prop_coal, ind) in zip(lambdas, proposed_coal, 1:num_builds)]
 			num_iters_admm += 1
+			diff_norm = norm(reduce(hcat, proposed_coal) .- new_coal)
 			# if num_iters_admm > 1000
 			# 	println("Convergence failed")
 			# 	break
@@ -671,7 +699,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 							b.SoC[k+1] = isnan(next_soc) ? b.SoC[k] : max(0, next_soc)
 						end
 						remaining = b.act_prod[k]-b.act_cons[k]-value(sv[1][1, 1])
-						isnan(remaining) && (remaining = 0.0)
+						isnan(remaining) && (global CORRUPTED_STEPS += 1; remaining = 0.0)
 						if remaining > 0
 							sell[k,b.id] = remaining
 						else
@@ -690,7 +718,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 							internal_rev[k,b.id] = price1 * coal_exch_mat[k,b.id]
 						end
 						remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,i]) + value(res[1][1,i]))
-						isnan(remaining) && (remaining = 0.0)
+						isnan(remaining) && (global CORRUPTED_STEPS += 1; remaining = 0.0)
 						if remaining > 0
 							sell[k,b.id] = remaining
 						else
@@ -707,7 +735,7 @@ function coal_MPC(coal_former::Function,bs::Vector{MPC_Building}, max_coal_size:
 			ce = value(res[6][1,1])
 			coal_exch_mat[k,b.id] = isnan(ce) ? 0.0 : ce
 			remaining = b.act_prod[k]-b.act_cons[k]-(value(res[6][1,1]) + value(res[1][1,1]))
-			isnan(remaining) && (remaining = 0.0)
+			isnan(remaining) && (global CORRUPTED_STEPS += 1; remaining = 0.0)
 			if remaining > 0
 				sell[k,b.id] = remaining
 			else

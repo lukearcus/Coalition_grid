@@ -217,47 +217,45 @@ The observability ratio is meaningful for comparing observation models (e.g., Mo
 \section{Coalition Results}\label{sec:coalition}
 % ===========================================================================
 
-We now consider a 2-agent coalition (buildings~1 and~3) at the same MPC step $k=20$, $h=16$. The coalition is solved both centrally (LP with $\sum_i \ce_i = 0$) and via ADMM (per-agent QP subproblems with a quadratic consensus penalty).
+We now consider a 2-agent coalition (buildings~1 and~3) at the same MPC step $k=20$, $h=16$. The coalition is solved both centrally (LP with $\sum_i \ce_i = 0$) and via ADMM (per-agent QP subproblems with a quadratic consensus penalty). Both the centralized and ADMM solvers use SCS; the centralized solve uses a tighter tolerance ($10^{-6}$) than the ADMM subproblems ($10^{-4}$).
 
-\subsection{Three Observation Models}
+\subsection{Two Observation Models (KKT-MILP)}
+
+Both models use the exact KKT-MILP formulation (banded complementary slackness with indicator constraints), identical to the singleton case but with the coalition exchange $\ce$ entering the power balance. The banded CS tolerance is $\text{cs\_tol} = 0.05$ for Model~B (centralized, $10^{-6}$ data) and $\text{cs\_tol} = 0.5$ for Model~C (ADMM, $10^{-4}$ data) to accommodate solver noise.
 
 \begin{table}[ht]
 \centering
-\caption{Coalition observability: mean $\netload$ ratio across all $h=16$ timesteps. Lower is more observable. Battery parameters are assumed known.}
+\caption{Coalition observability (KKT-MILP, known battery, $h=16$). ``Ratio'' is the mean $\netload$ observability ratio; ``Width'' is the mean absolute bound (kW). Lower is more observable.}
 \label{tab:coalition}
 \small
-\begin{tabular}{lc rr}
+\begin{tabular}{lc rr rr}
 \toprule
-Model & Observation & Agent~1 & Agent~2 \\
+& & \multicolumn{2}{c}{Agent~1 (Bldg~1)} & \multicolumn{2}{c}{Agent~2 (Bldg~3)} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+Model & Observation & Ratio & Width & Ratio & Width \\
 \midrule
-A (converged, $z^*$ only) & $z_i^*$ & 80.96 & 268.33 \\
-B (converged, $z^* + \ce^*$) & $z_i^*,\ \ce_i^*$ & \textbf{1.64} & \textbf{1.27} \\
-C (trajectory, 5 iters) & $z_i^{(j)},\ \ce_i^{(j)},\ \forall j$ & 2.65 & 2.06 \\
-C (trajectory, 10 iters) & $z_i^{(j)},\ \ce_i^{(j)},\ \forall j$ & 2.65 & 2.05 \\
-C (trajectory, 20 iters) & $z_i^{(j)},\ \ce_i^{(j)},\ \forall j$ & 2.63 & 2.05 \\
+B (converged, $z^* + \ce^*$) & $z_i^*,\ \ce_i^*$ & 1.57 & 56.1 & 1.16 & 9.4 \\
+C5 (trajectory, 5 iters) & $z_i^{(j)},\ \ce_i^{(j)}$ & \textbf{1.25} & \textbf{38.8} & \textbf{1.02} & \textbf{8.7} \\
+C10 (trajectory, 10 iters) & $z_i^{(j)},\ \ce_i^{(j)}$ & \textbf{1.21} & \textbf{36.6} & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Model A ($z^*$ only): unobservable.}
-Without observing $\ce_i^*$, the coalition exchange is a free variable. The other agent's $\ce$ can absorb any discrepancy in $\netload$, so the bounds hit the prior limits ($\ratio{} \approx 80$--$268$). This is the same as the singleton case with unknown battery: the free variables swamp the signal.
+\paragraph{Model B ($z^* + \ce^*$): converged observation.}
+Observing both the converged grid trade and the coalition exchange gives $\ratio{} \approx 1.2$--$1.6$. The power balance $\netload + \deltas + \ce^* = g^+ - g^-$ provides one equation per timestep with $\ce^*$ known, reducing the ambiguity to the battery action $\deltas$ alone. The KKT-MILP pins $\deltas$ via complementary slackness, giving tight bounds. At timesteps where the battery hits a binding constraint (e.g., $t=14$--$16$), $\netload$ is nearly point-identified (width $\sim 0.2$\,kW).
 
-\paragraph{Model B ($z^* + \ce^*$): tightest.}
-Observing both the converged grid trade and the coalition exchange gives $\ratio{} \approx 1.3$--$1.6$. The power balance $\netload + \deltas + \ce^* = z^* - g^-[t]$ provides one equation per timestep with $\ce^*$ known, reducing the ambiguity to the battery action $\deltas$ alone. With known battery parameters and strong duality (which pins $\deltas$ via optimality), the bounds are tight.
+\paragraph{Model C (ADMM trajectory): tightest.}
+Each ADMM iteration~$j$ provides a separate observation $(z_i^{(j)}, \ce_i^{(j)})$ with a different coalition exchange. The KKT-MILP stacks $J$ blocks sharing the private parameters $\netload, \SoC_0$, giving $J$ independent KKT systems that must all be simultaneously feasible. This tightens the bounds significantly: $\ratio{}$ drops from 1.57 (Model~B) to 1.21 (C10) for agent~1, and from 1.16 to 1.02 for agent~2.
 
-\paragraph{Model C (ADMM trajectory): intermediate.}
-Each ADMM iteration~$j$ solves a QP:
-\begin{equation}
-    \min \sum_t \bigl(\pb\, g^{+,(j)} - \ps\, g^{-,(j)}\bigr) + \lambda^{(j)\prime} \ce^{(j)} + \frac{c}{2}\|\ce^{(j)} - \text{ct}^{(j)}\|^2.
-\end{equation}
-The ADMM subproblem is a convex QP, but the only quadratic term involves $\ce$, which is observed. At the observed optimum, the stationarity condition for the free variable $\ce$ is satisfied ($\mu = \lambda + c(\ce_j - \text{ct})$), so the $Q^+$ term in the dual vanishes. With $\ce$ fixed to $\ce^{(j)}$, the quadratic term in the objective is a known constant $K^{(j)}$, and all KKT conditions---including strong duality---are linear in the private parameters. The inverse problem is therefore an LP. (If $\ce$ were not observed, the strong duality would contain a quadratic term in $\ce$, making the inverse problem a QCQP.) LP strong duality gives a linear equation in $\netload$ with the per-iteration dual $\mu^{(j)}$ (extracted from the subproblem). Multiple iterations provide multiple equations, but the duals barely change across iterations (the active set is determined by the tariff, not the ADMM parameters), so the tightening is modest: $\ratio{} \approx 2.1$--$2.7$.
+The trajectory is more informative than the single converged observation because different ADMM iterations have different $\ce^{(j)}$ values, each constraining $\netload$ from a different angle. At $t=1$ (agent~1), the bound width drops from 59.3\,kW (Model~B) to 2.6\,kW (C10)---a 23$\times$ tightening.
 
-The trajectory model is wider than Model~B because (i)~complementary slackness is disabled across iterations (SCS dual noise at $10^{-4}$ tolerance makes exact CS constraints infeasible when stacked), and (ii)~the strong duality tolerance must be widened ($\pm 0.5$) to accommodate the SCS duality gap.
+\paragraph{Banded complementary slackness.}
+The ADMM subproblems solve at $10^{-4}$ tolerance, producing $\sim 10^{-3}$ noise on the observed $(z^{(j)}, \ce^{(j)})$. Exact CS equalities (e.g., $\text{pos}_\delta = 0$) clash with this noise: a true zero action perturbed to $+0.05$ forces a stationarity condition that violates the dual bounds. We resolve this by replacing exact CS with banded CS: $y = 1 \Rightarrow \text{primal} \leq \text{cs\_tol}$ (at bound within tolerance) and $y = 0 \Rightarrow \text{dual} = 0$ (stationarity holds). With $\text{cs\_tol} = 0.5$\,kW, all blocks are feasible at $\theta^{\text{true}}$. Model~B uses a tighter band ($\text{cs\_tol} = 0.05$) because the centralized LP data is cleaner.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{figs/coal_bounds.pdf}
-    \caption{Per-timestep $\netload$ bounds for agent~1 in the 2-agent coalition. Model~A (blue) is unbounded; Model~B (green) is tightest; Model~C with 10 iterations (red) is intermediate. The true $\netload$ (black) lies within all bounds.}
+    \caption{Per-timestep $\netload$ bounds for agent~1 in the 2-agent coalition (KKT-MILP). Model~B (green, converged) is wider; Model~C with 10 iterations (red, trajectory) is tighter. The true $\netload$ (black) lies within all bounds. At $t=14$--$16$ (battery empty), both models point-identify $\netload$.}
     \label{fig:coal_bounds}
 \end{figure}
 
@@ -265,20 +263,20 @@ The trajectory model is wider than Model~B because (i)~complementary slackness i
 \section{Comparison: Singleton vs.\ Coalition}\label{sec:comparison}
 % ===========================================================================
 
-\Cref{tab:comparison} compares the singleton and coalition settings (both with known battery). The singleton row uses the exact KKT-MILP; the coalition rows use the dual-fixed LP approximation\footnote{The coalition MILP extension is straightforward but not yet implemented; the dual-fixed results are a lower bound on the true (wider) identifiability set.}.
+\Cref{tab:comparison} compares the singleton and coalition settings (both with known battery, exact KKT-MILP).
 
 \begin{table}[ht]
 \centering
-\caption{Mean $\netload$ observability ratio: singleton vs.\ coalition (known battery, $h=16$). Singleton uses exact KKT-MILP; coalition uses dual-fixed LP (footnote~1).}
+\caption{Mean $\netload$ observability ratio: singleton vs.\ coalition (known battery, $h=16$, KKT-MILP).}
 \label{tab:comparison}
 \small
 \begin{tabular}{l r r}
 \toprule
 Setting & Agent~1 (Bldg~1) & Agent~2 (Bldg~3) \\
 \midrule
-Singleton (KKT-MILP) & 1.57 & 1.53 \\
-Coalition, Model~B ($z^* + \ce^*$)\textsuperscript{1} & \textbf{1.6} & \textbf{1.3} \\
-Coalition, Model~C (trajectory)\textsuperscript{1} & 2.7 & 2.1 \\
+Singleton & 1.57 & 1.53 \\
+Coalition, Model~B ($z^* + \ce^*$) & 1.57 & \textbf{1.16} \\
+Coalition, Model~C (trajectory, 10 iters) & \textbf{1.21} & \textbf{1.02} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -366,7 +364,7 @@ We have shown that an adversary observing the broadcast grid trades and coalitio
 \begin{enumerate}[nosep]
     \item With known battery parameters, $\netload$ is tightly observable: the bound width is $\sim\Pb$ (the battery power rating), giving a ratio of $\sim 1.3$--$1.6$ across all buildings. At timesteps where the battery hits a binding constraint (e.g., empty at the horizon end), $\netload$ is \emph{point-identified} (width $= 0$).
     \item With unknown battery parameters, the KKT conditions tighten the feasibility bounds (e.g., from 1000\,kW to 500--711\,kW for $h=16$), but $\Qb$ and $\Pb$ themselves remain unobservable---their bounds span the full prior range.
-    \item Coalition participation \emph{increases} observability (Model~B ratio $\sim 1.3$ vs.\ singleton $\sim 1.5$) because the coalition exchange $\ce^*$ reveals additional structural information\footnote{Coalition results use the dual-fixed LP approximation; the exact KKT-MILP for the coalition case is left for future work.}.
+    \item Coalition participation \emph{increases} observability. The coalition exchange $\ce^*$ provides additional structural information: Model~B (converged observation) gives a ratio of $\sim 1.2$--$1.6$ vs.\ singleton $\sim 1.5$. The ADMM trajectory (Model~C, 10 iterations) tightens further to $\sim 1.0$--$1.2$, because different iterations' coalition exchanges constrain $\netload$ from different angles.
     \item The existing DP mechanism protects the coalition structure but not the private data revealed through the ADMM broadcasts. The $\delta_G$ parameter has no effect on the observability of private parameters.
 \end{enumerate}
 
@@ -427,6 +425,6 @@ No strong duality constraint is needed: for an LP, the KKT conditions (primal fe
 
 An earlier attempt used a dual-fixed LP (fixing $\mu, \sigma, \alpha, \beta$ to values from the forward solve and imposing strong duality as a linear constraint). This was retired because SCS dual noise ($\sim 0.3$ gap at $10^{-4}$ tolerance) polluted the strong duality equality, producing bounds that excluded the true parameters. The MILP approach is exact and does not require forward-solve duals.
 
-For the coalition case, the same MILP structure applies per-agent, with the coalition exchange $\ce_i$ either observed (Model~B: adds $\ce_i = \ce_i^*$ to the primal) or unobserved (Model~A). The coalition results in this paper use the dual-fixed LP approximation; the exact coalition MILP is left for future work.
+For the coalition case, the same MILP structure applies per-agent, with the coalition exchange $\ce_i$ entering the power balance as an observed constant (Model~B: $\ce_i = \ce_i^*$ from the centralized LP; Model~C: $\ce_i = \ce_i^{(j)}$ from each ADMM iteration). Multiple ADMM iterations are handled by stacking $J$ KKT blocks sharing the private parameters, giving $J \times (6h+1)$ binaries. The banded CS tolerance is tightened to $\text{cs\_tol} = 0.05$ for Model~B (centralized, $10^{-6}$ data) and loosened to $\text{cs\_tol} = 0.5$ for Model~C (ADMM, $10^{-4}$ data) to accommodate solver noise.
 
 \end{document}
